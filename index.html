@@ -1,3 +1,4 @@
+
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Lantern Hollow Horror</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -1741,12 +1742,235 @@ function drawAtmosphere(){
   ctx.restore();
 }
 
+/* ================================================================
+   LANTERN HOLLOW: FIELD INVESTIGATION EXPANSION
+   Collectible case files, journal, pause screen, achievements, and
+   interaction prompts. Kept dependency-free for offline HTML play.
+   ================================================================ */
+var LH_FIELD_FILES = [
+ {id:'file_lobby',room:'LOBBY',x:8.2,y:2.35,title:'The Last Shift',text:'The theatre closed at 11:17 PM. Nobody signed out. The morning crew found every chair facing the stage, even the ones bolted to the floor.'},
+ {id:'file_stage',room:'STAGE',x:3.5,y:2.1,title:'Pip’s Cue Card',text:'Pip has no strings. We cut them all yesterday. Tonight he still moved when the curtain dropped. Do not stand in the spotlight when the music starts.'},
+ {id:'file_shop',room:'SHOP',x:12.3,y:2.35,title:'Workshop Warning',text:'If you hear tapping from inside a cabinet, leave it closed. The tapping is not a trapped animal. It is counting the people in the room.'},
+ {id:'file_archive',room:'ARCHIVE',x:3.2,y:12.45,title:'Missing Inventory',text:'Five puppets were listed in the inventory. Six shadows appeared on the wall during the inspection. The extra shadow had its head turned toward the person holding the clipboard.'},
+ {id:'file_dress',room:'DRESS',x:4.6,y:9.55,title:'Mirror Test',text:'Mirelle copies movements a little late. If her reflection smiles before she does, cover the mirror and do not look back until the hallway light returns.'},
+ {id:'file_basement',room:'BASEMENT',x:10.6,y:9.45,title:'Basement Log',text:'The basement door was welded shut from the outside. Scratches were found on the inside. The scratches were fresh, and there were no tools in the room.'},
+ {id:'file_generator',room:'GENERATOR',x:12.1,y:12.4,title:'Power Report',text:'The generator loses power only when the cameras show an empty room. The technician insists this is impossible. The technician has not returned to collect his pay.'},
+ {id:'file_tunnel',room:'TUNNEL',x:7.7,y:12.1,title:'Final Message',text:'If you are reading this, the building has noticed you. The footsteps behind you are not an echo. Keep moving, and never trust a camera that shows you standing still.'}
+];
+var LH_FIELD_STATE = {collected:Object.create(null),journalOpen:false,paused:false,toast:'',toastUntil:0,lastNear:null,achievements:Object.create(null)};
+var LH_ACHIEVEMENTS = [
+ {id:'first_file',name:'Paper Trail',desc:'Find your first case file.'},
+ {id:'half_files',name:'The Investigator',desc:'Collect four case files.'},
+ {id:'all_files',name:'The Whole Story',desc:'Collect every case file.'},
+ {id:'dark_visit',name:'Into the Dark',desc:'Visit the basement.'},
+ {id:'stalker',name:'Not Alone',desc:'Let a monster get dangerously close and survive.'}
+];
+function lhLoadFieldState(){
+ try{
+  var raw=localStorage.getItem('lanternHollowFieldFilesV1');
+  if(raw){var d=JSON.parse(raw);LH_FIELD_STATE.collected=d.collected||Object.create(null);LH_FIELD_STATE.achievements=d.achievements||Object.create(null);}
+ }catch(e){/* Storage may be disabled; game still works for this session. */}
+}
+function lhSaveFieldState(){
+ try{localStorage.setItem('lanternHollowFieldFilesV1',JSON.stringify({collected:LH_FIELD_STATE.collected,achievements:LH_FIELD_STATE.achievements}));}catch(e){}
+}
+function lhCountFiles(){return LH_FIELD_FILES.filter(function(f){return !!LH_FIELD_STATE.collected[f.id];}).length;}
+function lhToast(message){LH_FIELD_STATE.toast=message;LH_FIELD_STATE.toastUntil=performance.now()+3000;}
+function lhUnlock(id){
+ if(LH_FIELD_STATE.achievements[id])return;
+ var a=LH_ACHIEVEMENTS.find(function(x){return x.id===id;});if(!a)return;
+ LH_FIELD_STATE.achievements[id]=true;lhSaveFieldState();lhToast('ACHIEVEMENT UNLOCKED: '+a.name);
+ if(typeof sChime==='function')sChime();
+}
+function lhCurrentRoom(){return G&&G.player?roomAt(G.player.x,G.player.y):'LOBBY';}
+function lhNearbyFile(){
+ if(!G||!G.freeMode||!G.player)return null;
+ var p=G.player,best=null,bd=1.35;
+ LH_FIELD_FILES.forEach(function(f){if(LH_FIELD_STATE.collected[f.id])return;var d=Math.hypot(p.x-f.x,p.y-f.y);if(d<bd){best=f;bd=d;}});
+ return best;
+}
+function lhCollectFile(f){
+ if(!f||LH_FIELD_STATE.collected[f.id])return;
+ LH_FIELD_STATE.collected[f.id]=true;lhSaveFieldState();LH_FIELD_STATE.journalOpen=f.id;
+ lhUnlock('first_file');if(lhCountFiles()>=4)lhUnlock('half_files');if(lhCountFiles()===LH_FIELD_FILES.length)lhUnlock('all_files');
+ if(typeof sClick==='function')sClick();
+}
+function lhDrawJournal(){
+ if(!LH_FIELD_STATE.journalOpen)return;
+ ctx.save();ctx.fillStyle='rgba(4,5,7,.94)';ctx.fillRect(90,46,W-180,H-92);
+ ctx.strokeStyle='#b18b53';ctx.lineWidth=2;ctx.strokeRect(90,46,W-180,H-92);
+ ctx.fillStyle='#b18b53';ctx.font='bold 14px monospace';ctx.textAlign='left';ctx.fillText('LANTERN HOLLOW // CASE FILES',116,78);
+ ctx.fillStyle='#e9dfca';ctx.font='bold 26px Georgia,serif';
+ var chosen=LH_FIELD_FILES.find(function(f){return f.id===LH_FIELD_STATE.journalOpen;});
+ if(chosen){ctx.fillText(chosen.title,116,125);ctx.fillStyle='#c9c0ad';ctx.font='17px Georgia,serif';lhWrapText(chosen.text,116,165,W-250,27);}
+ else{
+  ctx.fillStyle='#e9dfca';ctx.font='bold 22px Georgia,serif';ctx.fillText('Investigation Journal',116,120);
+  ctx.font='14px monospace';var y=157;
+  LH_FIELD_FILES.forEach(function(f){ctx.fillStyle=LH_FIELD_STATE.collected[f.id]?'#d8c7a3':'#716d65';ctx.fillText((LH_FIELD_STATE.collected[f.id]?'✓ ':'□ ')+f.title,120,y);y+=25;});
+  ctx.fillStyle='#b18b53';ctx.fillText('FILES FOUND: '+lhCountFiles()+'/'+LH_FIELD_FILES.length,120,y+8);
+ }
+ ctx.textAlign='right';ctx.fillStyle='#a7a095';ctx.font='12px monospace';ctx.fillText('PRESS J OR ESC TO CLOSE',W-116,H-70);ctx.restore();
+}
+function lhWrapText(text,x,y,maxWidth,lineHeight){
+ var words=text.split(' '),line='';
+ for(var n=0;n<words.length;n++){
+  var test=line+words[n]+' ';
+  if(ctx.measureText(test).width>maxWidth&&n>0){ctx.fillText(line,x,y);line=words[n]+' ';y+=lineHeight;}else line=test;
+ }
+ if(line)ctx.fillText(line,x,y);
+}
+function lhDrawInvestigationHUD(){
+ if(!G||!G.freeMode)return;
+ var count=lhCountFiles(),near=lhNearbyFile(),now=performance.now();
+ ctx.save();ctx.textAlign='left';ctx.fillStyle='rgba(5,6,8,.82)';ctx.fillRect(18,H-75,300,42);
+ ctx.strokeStyle='#8c7857';ctx.strokeRect(18,H-75,300,42);
+ ctx.fillStyle='#e4d2ae';ctx.font='bold 12px monospace';ctx.fillText('CASE FILES  '+count+'/'+LH_FIELD_FILES.length,30,H-57);
+ ctx.fillStyle='#9a927f';ctx.font='10px monospace';ctx.fillText('J JOURNAL  ·  E INVESTIGATE  ·  T THREATS  ·  P PAUSE',30,H-42);
+ if(near){
+  var pulse=.65+.35*Math.sin(frame*.13);
+  ctx.fillStyle='rgba(4,5,7,.9)';ctx.fillRect(W/2-190,H-132,380,40);
+  ctx.strokeStyle='rgba(220,180,105,'+pulse+')';ctx.strokeRect(W/2-190,H-132,380,40);
+  ctx.textAlign='center';ctx.fillStyle='#f0d39b';ctx.font='bold 14px monospace';ctx.fillText('[ E ] INVESTIGATE: '+near.title.toUpperCase(),W/2,H-108);
+ }
+ if(LH_FIELD_STATE.toast&&now<LH_FIELD_STATE.toastUntil){
+  ctx.textAlign='center';ctx.fillStyle='rgba(8,7,7,.92)';ctx.fillRect(W/2-220,58,440,42);
+  ctx.strokeStyle='#b18b53';ctx.strokeRect(W/2-220,58,440,42);
+  ctx.fillStyle='#f1d59b';ctx.font='bold 13px monospace';ctx.fillText(LH_FIELD_STATE.toast,W/2,84);
+ }
+ if(LH_FIELD_STATE.paused){
+  ctx.fillStyle='rgba(0,0,0,.78)';ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';ctx.fillStyle='#eadfc8';ctx.font='bold 46px Georgia,serif';ctx.fillText('PAUSED',W/2,H/2-20);
+  ctx.fillStyle='#b7aa92';ctx.font='14px monospace';ctx.fillText('PRESS P TO RESUME  ·  J TO READ YOUR JOURNAL',W/2,H/2+24);
+ }
+ lhDrawJournal();ctx.restore();
+}
+function lhHandleFieldKey(k){
+ if(!G||!G.freeMode)return false;
+ if(k==='p'&&!LH_FIELD_STATE.journalOpen){LH_FIELD_STATE.paused=!LH_FIELD_STATE.paused;G.freeKeys={};return true;}
+ if(k==='j'||k==='escape'){
+  if(LH_FIELD_STATE.journalOpen){LH_FIELD_STATE.journalOpen=false;return true;}
+  if(k==='j'){LH_FIELD_STATE.journalOpen='journal';return true;}
+ }
+ if(LH_FIELD_STATE.paused||LH_FIELD_STATE.journalOpen)return true;
+ if(k==='e'){
+  var f=lhNearbyFile();if(f)lhCollectFile(f);else lhToast('Nothing to investigate nearby.');return true;
+ }
+ return false;
+}
+function lhTickFieldSystems(){
+ if(!G||!G.freeMode)return;
+ if(lhCurrentRoom()==='BASEMENT')lhUnlock('dark_visit');
+ var p=G.player,nearest=99;
+ G.chars.forEach(function(c){if(c.freePos)nearest=Math.min(nearest,Math.hypot(p.x-c.freePos.x,p.y-c.freePos.y));});
+ if(nearest<1.8&&G.freeMonsterAI)lhUnlock('stalker');
+}
+lhLoadFieldState();
+window.addEventListener('keydown',function(e){
+ if(!G||!G.freeMode||$('#game').hidden||e.ctrlKey||e.metaKey||e.altKey)return;
+ var k=e.key.toLowerCase();
+ if(['e','j','p','escape'].indexOf(k)>=0){if(lhHandleFieldKey(k)){e.preventDefault();e.stopImmediatePropagation();}}
+});
+/* end of field investigation expansion */
+
+
+/* Threat tracker / field intelligence display. */
+var LH_TRACKER={open:false,lastSeen:Object.create(null),pulse:0};
+function lhThreatLabel(c,p){
+ if(!c.freePos)return 'SEARCHING';
+ var d=Math.hypot(p.x-c.freePos.x,p.y-c.freePos.y);
+ if(d<1.25)return 'CRITICAL — VERY CLOSE';
+ if(d<3.2)return 'NEARBY — MOVING';
+ if(d<6.5)return 'IN THE BUILDING';
+ return 'DISTANT / UNCONFIRMED';
+}
+function lhUpdateTracker(){
+ if(!G||!G.freeMode||!G.player)return;
+ LH_TRACKER.pulse+=.05;
+ G.chars.forEach(function(c){
+  if(!c.freePos)return;
+  var d=Math.hypot(G.player.x-c.freePos.x,G.player.y-c.freePos.y);
+  if(d<5||roomAt(c.freePos.x,c.freePos.y)===lhCurrentRoom()){
+   LH_TRACKER.lastSeen[c.id]={room:roomAt(c.freePos.x,c.freePos.y),time:G.freeT,distance:d};
+  }
+ });
+}
+function lhDrawTracker(){
+ if(!LH_TRACKER.open||!G||!G.freeMode)return;
+ var p=G.player,now=G.freeT;
+ ctx.save();ctx.fillStyle='rgba(3,5,6,.95)';ctx.fillRect(100,62,W-200,H-124);
+ ctx.strokeStyle='#8da49a';ctx.lineWidth=2;ctx.strokeRect(100,62,W-200,H-124);
+ ctx.fillStyle='#b7d7c0';ctx.font='bold 18px monospace';ctx.textAlign='left';ctx.fillText('LH SECURITY // THREAT TRACKER',124,96);
+ ctx.fillStyle='#839b8a';ctx.font='11px monospace';ctx.fillText('LIVE ESTIMATES ONLY — CAMERAS MAY LIE',124,116);
+ var y=151;
+ G.chars.forEach(function(c){
+  var d=c.freePos?Math.hypot(p.x-c.freePos.x,p.y-c.freePos.y):99;
+  var label=lhThreatLabel(c,p),col=d<1.25?'#ff665c':d<3.2?'#e7b86d':'#b7d7c0';
+  ctx.fillStyle='rgba(35,42,38,.78)';ctx.fillRect(122,y,W-244,47);
+  ctx.fillStyle=col;ctx.font='bold 14px monospace';ctx.fillText(c.name.toUpperCase(),136,y+19);
+  ctx.fillStyle='#d0d7cb';ctx.font='11px monospace';ctx.fillText(label,136,y+36);
+  ctx.textAlign='right';ctx.fillStyle='#aab7a8';ctx.fillText('DIST '+(d<99?d.toFixed(1)+'m':'UNKNOWN')+'  ·  '+(G.freeMonsterAI?'AI ACTIVE':'AI FROZEN'),W-138,y+27);ctx.textAlign='left';
+  var seen=LH_TRACKER.lastSeen[c.id];
+  if(seen){ctx.fillStyle='#7e8a7f';ctx.font='10px monospace';ctx.fillText('LAST TRACE: '+((roomThemes[seen.room]||{}).name||seen.room)+'  /  '+Math.max(0,Math.floor(now-seen.time))+'s ago',W*.53,y+18);}
+  y+=58;
+ });
+ if(!G.chars.length){ctx.fillStyle='#b7d7c0';ctx.font='14px monospace';ctx.fillText('NO ACTIVE MONSTER SIGNALS',136,y+5);}
+ ctx.textAlign='center';ctx.fillStyle='#9aa99c';ctx.font='12px monospace';ctx.fillText('PRESS T TO CLOSE',W/2,H-88);ctx.restore();
+}
+function lhHandleTrackerKey(k){
+ if(!G||!G.freeMode)return false;
+ if(k==='t'){LH_TRACKER.open=!LH_TRACKER.open;G.freeKeys={};return true;}
+ if(LH_TRACKER.open)return true;
+ return false;
+}
+window.addEventListener('keydown',function(e){
+ if(!G||!G.freeMode||$('#game').hidden||e.ctrlKey||e.metaKey||e.altKey)return;
+ var k=e.key.toLowerCase();
+ if(lhHandleTrackerKey(k)){e.preventDefault();e.stopImmediatePropagation();}
+});
+/* Tracker stays useful even when a monster is outside the current camera view. */
+
+/* Room-specific paranormal events add variety without blocking movement. */
+var LH_AMBIENCE={nextAt:18,lastRoom:'',message:'',until:0};
+var LH_ROOM_EVENTS={
+ STAGE:['A curtain shifts although the air is still.','A spotlight clicks on above the empty stage.','A tiny bow scrapes across a string somewhere nearby.'],
+ LOBBY:['The front doors rattle once.','A reception bell rings from an empty desk.','A wet footprint appears, then fades.'],
+ SHOP:['A tool rolls off a shelf behind you.','Something knocks three times from inside a crate.','A drawer slides shut with a wooden thud.'],
+ ARCHIVE:['A book falls open on the floor.','The shelves creak under an invisible weight.','A page turns somewhere in the dark.'],
+ BASEMENT:['A pipe bangs hard enough to shake dust loose.','Water drips into a puddle that was not there before.','A low mechanical groan rises from behind the wall.'],
+ GENERATOR:['The generator misses a beat and the lights dip.','A relay clicks rapidly, then stops.','A warning lamp flashes without a pattern.'],
+ TUNNEL:['Footsteps echo one pace behind yours.','A cable swings slowly across the corridor.','A breathy whisper travels through the vent.'],
+ HALL:['A portrait seems to follow you for a moment.','A chair scrapes across the floor in a distant room.','The theatre speakers hiss, almost forming a name.']
+};
+function lhAmbientTick(dt){
+ if(!G||!G.freeMode||LH_FIELD_STATE.paused||LH_FIELD_STATE.journalOpen)return;
+ LH_AMBIENCE.nextAt-=dt;
+ if(LH_AMBIENCE.nextAt>0)return;
+ LH_AMBIENCE.nextAt=18+Math.random()*24;
+ var room=lhCurrentRoom(),events=LH_ROOM_EVENTS[room]||LH_ROOM_EVENTS.HALL;
+ LH_AMBIENCE.message=events[Math.floor(Math.random()*events.length)];
+ LH_AMBIENCE.until=G.freeT+4.5;
+ if(Math.random()<.35&&typeof tone==='function')tone(90+Math.random()*80,.22,'sine',.035,45);
+}
+function lhDrawAmbient(){
+ if(!G||!G.freeMode||!LH_AMBIENCE.message||G.freeT>LH_AMBIENCE.until)return;
+ var a=Math.min(1,(LH_AMBIENCE.until-G.freeT)/.8);
+ ctx.save();ctx.globalAlpha=a;ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.68)';ctx.fillRect(W/2-250,H-178,500,27);
+ ctx.fillStyle='#c9c1ad';ctx.font='italic 12px Georgia,serif';ctx.fillText(LH_AMBIENCE.message,W/2,H-160);ctx.restore();
+}
+
+/* Publicly readable investigation summary for future save/export hooks. */
+function lhInvestigationSummary(){
+ return {found:lhCountFiles(),total:LH_FIELD_FILES.length,
+  achievements:LH_ACHIEVEMENTS.filter(function(a){return !!LH_FIELD_STATE.achievements[a.id];}).length,
+  room:lhCurrentRoom(),trackerOpen:LH_TRACKER.open};
+}
+
 function render(){
   frame++;
   ctx.clearRect(0,0,W,H);
   if(!G){return;}
   if(G.state==='scare'||G.state==='over'){drawScare();return;}
-  if(G.freeMode){drawFree3D();if(G.manualScare)drawManualScare();drawAtmosphere();drawFreeHUD();return;}
+  if(G.freeMode){drawFree3D();if(G.manualScare)drawManualScare();drawAtmosphere();drawFreeHUD();lhDrawInvestigationHUD();lhDrawTracker();lhDrawAmbient();return;}
   if(G.cam&&!G.powerOut){drawCam();}
   else{drawOffice();if(G.flick<1){ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(0,0,W,H);}}
   drawAtmosphere();
@@ -1760,7 +1984,10 @@ var last=0;
 function loop(ts){
   var dt=Math.min(.05,((ts-last)/1000)||0);last=ts;
   if(G){
-    if(G.state==='play')update(dt);
+    if(G.state==='play'&&!(G.freeMode&&(LH_FIELD_STATE.paused||LH_FIELD_STATE.journalOpen)))update(dt);
+    if(G&&G.freeMode&&!LH_FIELD_STATE.paused&&!LH_FIELD_STATE.journalOpen)lhTickFieldSystems();
+    if(G&&G.freeMode&&!LH_FIELD_STATE.paused&&!LH_FIELD_STATE.journalOpen)lhUpdateTracker();
+    if(G&&G.freeMode&&!LH_FIELD_STATE.paused&&!LH_FIELD_STATE.journalOpen)lhAmbientTick(dt);
     else if(G.state==='scare')updateScare(dt);
   }
   if(G&&!$('#game').hidden)render();
