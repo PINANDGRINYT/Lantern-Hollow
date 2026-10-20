@@ -64,6 +64,7 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(24px,4.5vw,32px);m
 .btn.night{flex:1 1 150px;text-align:left;display:flex;flex-direction:column;gap:2px}
 .btn.night small{font-size:11px;letter-spacing:.06em;color:var(--dim);text-transform:none}
 .btn.night:hover small{color:var(--paper)}
+.btn.primary small,.btn.primary:hover small{color:#3a2a10}
 .screen{position:relative;aspect-ratio:16/9;max-width:100%;background:#000;border:1px solid #49404c;overflow:hidden;box-shadow:0 0 0 4px rgba(0,0,0,.22),0 18px 50px rgba(0,0,0,.28)}
 .screen:after{content:"";position:absolute;inset:0;pointer-events:none;border:1px solid rgba(240,167,60,.12);box-shadow:inset 0 0 80px rgba(0,0,0,.35),inset 0 0 2px rgba(255,220,170,.12)}
 .screen:before{content:"";position:absolute;z-index:2;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,220,170,.025),transparent 20%,transparent 78%,rgba(0,0,0,.16));mix-blend-mode:screen}
@@ -105,7 +106,7 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
   </header>
 
   <section class="panel" id="menu">
-    <p>You have the night shift at the Lantern Hollow Puppet Theater. It closed years ago. The puppets never got the message. Survive until 6 AM — or choose 3D Free Roam to explore the theater directly.</p>
+    <p>You have the night shift at the Lantern Hollow Puppet Theater. It closed years ago. The puppets never got the message. Survive until 6 AM.</p>
     <p style="color:var(--dim);font-size:12px">SURVEILLANCE SYSTEM // BUILDING POWER UNSTABLE // STAFF: 1</p>
     <ul class="rules">
       <li>Open the cameras with <b>Space</b> and track Pip, Hob, Mirelle, the Crowkeeper and Stitchface across all 11 cameras.</li>
@@ -113,15 +114,14 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
       <li>Hear footsteps or see eyes in a doorway? Shut that door. Flash the light to check.</li>
       <li>Doors, lights and the monitor all drain the power. Mirelle is drawn to the light.</li>
       <li>If the power dies, something with a lantern comes to find you.</li>
+      <li>There are 20 nights and you play them in order. Every night is harder than the one before.</li>
     </ul>
     <div>
-      <div class="label" id="bestLine">Pick a night</div>
+      <div class="label" id="bestLine">Night 1 of 20</div>
     </div>
     <div class="btnrow">
-      <button class="btn night" data-night="1">Night 1<small>They are slow and sleepy</small></button>
-      <button class="btn night" data-night="2">Night 2<small>They are paying attention</small></button>
-      <button class="btn night" data-night="3">Night 3<small>They know where you sit</small></button>
-      <button class="btn night primary" id="startFreeRoam">3D Free Roam<small>Explore the whole theater without starting a night</small></button>
+      <button class="btn night primary" id="startBtn" type="button">Start night 1<small id="startSub">They are slow and sleepy</small></button>
+      <button class="btn" id="resetBtn" type="button" hidden>Start over from night 1</button>
     </div>
   </section>
 
@@ -131,7 +131,7 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
     <div class="btnrow">
       <button class="btn primary" id="nextNight" hidden>Next night</button>
       <button class="btn" id="again">Try this night again</button>
-      <button class="btn" id="toMenu">Night select</button>
+      <button class="btn" id="toMenu">Main menu</button>
     </div>
   </section>
 
@@ -180,7 +180,7 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
       <div class="command-grid free-tools">
         <div class="command-field"><label for="teleportRoom">Teleport to room</label><select id="teleportRoom"><option value="LOBBY">Front Lobby</option><option value="STAGE">Grand Stage</option><option value="HALL">Main Hall</option><option value="WEST">West Passage</option><option value="EAST">East Passage</option><option value="SHOP">Workshop</option><option value="DRESS">Dressing Room</option><option value="BASEMENT">Basement</option><option value="ARCHIVE">Prop Archive</option><option value="GENERATOR">Generator Room</option><option value="TUNNEL">Service Tunnel</option></select><button class="btn" id="teleportFree" type="button">Teleport</button></div>
         <div class="command-field"><label>Movement</label><button class="btn" id="noclipToggle" type="button" aria-pressed="false">Noclip: OFF</button><button class="btn" id="flashlightToggle" type="button" aria-pressed="true">Flashlight: ON</button></div>
-        <div class="command-field"><label>Monster behavior</label><button class="btn" id="monsterAiToggle" type="button" aria-pressed="false">Monster AI: FROZEN</button><p style="font-size:11px;color:var(--dim);margin:0">AI makes monsters chase you. If one catches you, it kills you.</p></div>
+        <div class="command-field"><label>Monster behavior</label><button class="btn" id="monsterAiToggle" type="button" aria-pressed="false">Monster AI: FROZEN</button><p style="font-size:11px;color:var(--dim);margin:0">AI lets monsters slowly follow you in Free Mode.</p></div>
       </div>
       <div class="command-status" id="commandStatus" role="status" aria-live="polite">Console ready. Choose a target to control the nightmare.</div>
       <p class="keys" id="freeHelp" hidden>3D CONTROLS: W/A/S/D move · mouse look · Shift sprint · Shift sprint · N noclip · L flashlight · M map · Ctrl+C console · F exits free mode.</p>
@@ -200,7 +200,28 @@ function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 
 var HOUR=32; // Faster nights: each in-game hour lasts 32 seconds (about 3m 12s total).
 var HOURS=['12 AM','1 AM','2 AM','3 AM','4 AM','5 AM','6 AM'];
-var LV=[{pip:3,hob:2,mir:2,crow:2,stitch:1},{pip:6,hob:5,mir:5,crow:5,stitch:4},{pip:10,hob:9,mir:8,crow:8,stitch:7}];
+var NIGHTS=20;
+/* Aggression levels rise every night until all five hit 20, which means they act on every single move. */
+var LV_BASE={pip:3,hob:2,mir:2,crow:2,stitch:1};
+function nightLevels(n){
+  var t=Math.pow((clamp(n,1,NIGHTS)-1)/(NIGHTS-1),.85),o={};
+  for(var k in LV_BASE)o[k]=Math.round(LV_BASE[k]+(20-LV_BASE[k])*t);
+  return o;
+}
+function nightBlurb(n){
+  if(n<=3)return 'They are slow and sleepy';
+  if(n<=7)return 'They are paying attention';
+  if(n<=12)return 'They know where you sit';
+  if(n<=17)return 'They do not tire';
+  if(n<NIGHTS)return 'Almost nothing stands between you and them';
+  return 'The final night';
+}
+var curNight=null;
+function savedNight(){
+  if(curNight===null){var n=1;try{n=parseInt(localStorage.getItem('lh-night')||'1',10);}catch(e){}curNight=(n>=1&&n<=NIGHTS+1)?n:1;}
+  return curNight;
+}
+function saveNight(n){curNight=n;try{localStorage.setItem('lh-night',String(n));}catch(e){}}
 var CAMS=['STAGE','HALL','WEST','EAST','SHOP','LOBBY','DRESS','BASEMENT','ARCHIVE','GENERATOR','TUNNEL'];
 var CAMNAME={STAGE:'Stage',HALL:'Main hall',WEST:'West passage',EAST:'East passage',SHOP:'Workshop',LOBBY:'Front lobby',DRESS:'Dressing room',BASEMENT:'Basement',ARCHIVE:'Prop archive',GENERATOR:'Generator room',TUNNEL:'Service tunnel'};
 
@@ -262,16 +283,16 @@ function mkChars(){
   ];
 }
 function newGame(n){
-  var L=LV[n-1];
+  var L=nightLevels(n);
   G={night:n,t:0,power:100,doors:{L:false,R:false},dp:{L:0,R:0},lights:{L:false,R:false},
      cam:false,camSel:1,glitch:0,state:'idle',chars:mkChars(),powerOut:false,outT:0,boxT:0,
-     scare:null,ended:false,card:0,flick:1,freeMode:false,freeT:0,freeNoClip:false,freeFlashlight:true,freeMonsterAI:true,player:FREE_START(),manualScare:null,freeKeys:{},freeMap:true};
+     scare:null,ended:false,card:0,flick:1,freeMode:false,freeT:0,freeNoClip:false,freeFlashlight:true,freeMonsterAI:false,player:FREE_START(),manualScare:null,freeKeys:{},freeMap:true};
   G.chars[0].lvl=L.pip;G.chars[1].lvl=L.hob;G.chars[2].lvl=L.mir;G.chars[3].lvl=L.crow;G.chars[4].lvl=L.stitch;
 }
 function usage(){
   return 1+(G.doors.L?1:0)+(G.doors.R?1:0)+(G.lights.L?1:0)+(G.lights.R?1:0)+(G.cam?1:0);
 }
-function intv(){return 5.4-.55*(G.night-1);}
+function intv(){return Math.max(1.8,5.4-.2*(G.night-1));}
 function camRoom(){return CAMS[G.camSel-1];}
 
 function nextRoom(c){
@@ -329,7 +350,7 @@ function stepChar(c,dt){
   if(!nx)return;
   c.room=nx;
   if(nx==='DL'||nx==='DR'){
-    c.doorT=Math.max(2.2,5-G.night*.6)+rand(0,1.8);
+    c.doorT=Math.max(1.2,4.6-.2*G.night)+rand(0,1.6);
     sKnock();
   }else{
     sStep(nx==='HALL'?.1:.16);
@@ -352,7 +373,7 @@ function update(dt){
     G.dp[s]=clamp(G.dp[s]+(G.doors[s]?1:-1)*dt*4,0,1);
   });
   if(!G.powerOut){
-    G.power-=.1*usage()*(1+.08*(G.night-1))*dt;
+    G.power-=.1*usage()*(1+.05*(G.night-1))*dt;
     if(G.power<=0){blackout();return;}
     G.flick=(G.lights.L||G.lights.R)?(Math.random()<.08?.55:1):1;
     G.chars.forEach(function(c){stepChar(c,dt);});
@@ -374,7 +395,7 @@ function updateScare(dt){
 }
 function winGame(){
   G.state='won';sChime();setHum(false);
-  try{var b=parseInt(localStorage.getItem('lh-best')||'0',10);if(G.night>b)localStorage.setItem('lh-best',String(G.night));}catch(e){}
+  if(savedNight()<=G.night)saveNight(G.night+1);
   setTimeout(function(){showEnd(true);},1800);
 }
 
@@ -384,8 +405,11 @@ function show(id){
   if(id==='game'){$('#game').style.display='flex';}
 }
 function bestText(){
-  var b=0;try{b=parseInt(localStorage.getItem('lh-best')||'0',10);}catch(e){}
-  $('#bestLine').textContent=b?('Pick a night. Nights survived: '+b+' of 3'):'Pick a night';
+  var n=savedNight(),done=n>NIGHTS,sb=$('#startBtn');
+  $('#bestLine').textContent=done?('All '+NIGHTS+' nights survived'):('Night '+n+' of '+NIGHTS+(n>1?'  //  '+(n-1)+' survived':''));
+  sb.firstChild.nodeValue=done?'Play again from night 1':(n>1?'Continue to night '+n:'Start night 1');
+  $('#startSub').textContent=done?'Every night, one more time':nightBlurb(n);
+  $('#resetBtn').hidden=(n<=1||done);
 }
 function startNight(n){
   initAudio();
@@ -396,16 +420,18 @@ function showEnd(win){
   var n=G.night;
   if(win){
     $('#endTitle').textContent='6 AM. The sun is up.';
-    $('#endText').textContent=n<3?'Night '+n+' survived. The puppets are back on their stage and very still. They will be there tonight too.':'You survived all three nights. Hand in your keys and do not come back.';
-    $('#nextNight').hidden=(n>=3);
-    $('#again').textContent='Play this night again';
+    $('#endText').textContent=n<NIGHTS?'Night '+n+' of '+NIGHTS+' survived. The puppets are back on their stage and very still. They will be there tonight too, and they will be quicker.':'You survived all '+NIGHTS+' nights. Hand in your keys and do not come back.';
+    $('#nextNight').hidden=(n>=NIGHTS);
+    $('#nextNight').textContent='Start night '+Math.min(NIGHTS,n+1);
+    $('#again').hidden=true;
   }else{
     var who=G.scare&&G.scare.c?G.scare.c.name:'Something';
     var hr=HOURS[Math.min(5,Math.floor(G.t/HOUR))];
     $('#endTitle').textContent='Shift cut short.';
     $('#endText').textContent=who+' reached you at '+hr+' on night '+n+'. Watch the cameras early and close the door before the knock.';
     $('#nextNight').hidden=true;
-    $('#again').textContent='Try this night again';
+    $('#again').hidden=false;
+    $('#again').textContent='Try night '+n+' again';
   }
   show('end');
 }
@@ -488,58 +514,24 @@ var maze=[],roomMap=[],roomIdxMap=new Uint8Array(MAP_N*MAP_N);
 var roomPos={STAGE:[3.5,2.5],HALL:[7.5,6.5],WEST:[1.5,9.5],EAST:[13.5,9.5],SHOP:[12.5,2.5],LOBBY:[8.5,2.5],DRESS:[4.5,9.5],BASEMENT:[10.5,9.5],ARCHIVE:[3.5,12.5],GENERATOR:[12.5,12.5],TUNNEL:[7.5,11.5],DL:[1.5,8.5],DR:[13.5,8.5]};
 function commandMsg(msg){var el=$('#commandStatus');if(el)el.textContent=msg;}
 function getMonster(id){return G&&G.chars.find(function(c){return c.id===id;});}
-function freeMonsterSpawnPosition(){
- var keys=Object.keys(roomPos),p=G.player,best=null,bestScore=-1;
- keys.forEach(function(key){
-  var rp=roomPos[key];
-  /* Try several points within each room so monsters don't stack on the same doorway. */
-  [[0,0],[.35,0],[-.35,0],[0,.35],[0,-.35],[.25,.25],[-.25,-.25]].forEach(function(off){
-   var pos=findOpen(rp[0]+off[0],rp[1]+off[1],p),nearPlayer=Math.hypot(pos.x-p.x,pos.y-p.y);
-   var nearest=nearPlayer;
-   G.chars.forEach(function(other){
-    var op=other.freePos;
-    if(!op){var orp=roomPos[other.room]||roomPos.HALL;op={x:orp[0]+((other.idx%3)-1)*.38,y:orp[1]+Math.floor(other.idx/3)*.3};}
-    nearest=Math.min(nearest,Math.hypot(pos.x-op.x,pos.y-op.y));
-   });
-   /* Prefer distant spots, strongly penalizing spawning right next to the player. */
-   var score=nearest+(nearPlayer<3?-10:0);
-   if(score>bestScore){bestScore=score;best={x:pos.x,y:pos.y,room:key};}
-  });
- });
- return best||{x:FREE_START().x,y:FREE_START().y,room:'LOBBY'};
-}
 function spawnMonster(id){
  if(!G)return;var c=getMonster(id);if(c){commandMsg(c.name+' is already in the building.');return;}
- var d=monsterDefs[id];if(!d)return;c={id:id,name:d.name,idx:d.idx,room:d.room,lvl:0,timer:999999,doorT:0};
- if(G.freeMode){var spawn=freeMonsterSpawnPosition();c.freePos={x:spawn.x,y:spawn.y};c.room=spawn.room;}
- G.chars.push(c);commandMsg(d.name+' spawned'+(G.freeMode?' far from you and other monsters':'')+' in '+(CAMNAME[c.room]||c.room)+'.');sThud();syncUI();
+ var d=monsterDefs[id];if(!d)return;c={id:id,name:d.name,idx:d.idx,room:d.room,lvl:0,timer:999999,doorT:0};G.chars.push(c);commandMsg(d.name+' spawned in '+(CAMNAME[c.room]||c.room)+'.');sThud();syncUI();
 }
 function removeMonster(id){if(!G)return;var c=getMonster(id);if(!c){commandMsg((monsterDefs[id]||{name:id}).name+' is not active.');return;}G.chars=G.chars.filter(function(x){return x.id!==id;});commandMsg(c.name+' removed from the world.');sClick();syncUI();}
 function enterFreeMode(on){if(!G)return;G.freeMode=!!on;G.cam=false;G.manualScare=null;G.freeKeys={};if(on){G.powerOut=false;G.power=Math.max(100,G.power);G.player=FREE_START();G.chars.forEach(function(c){c.timer=999999;});commandMsg('3D Free Mode active — explore freely. Monsters are frozen until you command them.');}else{commandMsg('Free mode disabled. Night survival resumed.');G.t=Math.min(G.t,HOUR*5.95);}syncUI();}
 function triggerCommandScare(){if(!G)return;var id=$('#scarePick').value;if(id==='selected')id=$('#monsterPick').value;var c=id==='lamp'?{id:'lamp',name:'The Lamplighter'}:getMonster(id);if(!c){spawnMonster(id);c=getMonster(id);}if(!c)return;if(G.state!=='play'&&!G.freeMode){commandMsg('Start a night or enter Free Mode to preview a jumpscare.');return;}/* Command-panel scares are visual previews only: never call doScare(), which ends the night. */G.manualScare={c:c,t:0};sScare();commandMsg('SAFE JUMPSCARE PREVIEW: '+c.name+' — you cannot die from a command-panel scare.');}
 $('#freeToggle').addEventListener('click',function(){enterFreeMode(!G.freeMode);});
-$('#startFreeRoam').addEventListener('click',function(){
-  initAudio();
-  newGame(1);
-  G.state='play';
-  G.card=0;
-  show('game');
-  enterFreeMode(true);
-  G.freeMonsterAI=true;
-  G.freeMap=true;
-  syncUI();
-  commandMsg('Free Roam ready. WASD to move, mouse to look, Shift to sprint. Press Ctrl+C for monster controls.');
-});
 function toggleCommandPanel(force){var panel=$('#commandPanel');if(!panel||!G||$('#game').hidden)return;panel.hidden=typeof force==='boolean'?!force:!panel.hidden;if(!panel.hidden){commandMsg('Command Console open. Ctrl+C hides it.');}else{commandMsg('Command Console hidden. Press Ctrl+C to reopen it.');}if(document.pointerLockElement===cv&&document.exitPointerLock)document.exitPointerLock();}
 window.addEventListener('keydown',function(e){if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key.toLowerCase()==='c'&&G&&!$('#game').hidden){e.preventDefault();toggleCommandPanel();return;}});
 $('#teleportFree').addEventListener('click',function(){if(!G)return;if(!G.freeMode)enterFreeMode(true);var key=$('#teleportRoom').value,rp=roomPos[key]||roomPos.LOBBY;G.player.x=rp[0];G.player.y=rp[1];G.player.a=bestAngle(rp[0],rp[1]);G.freeKeys={};commandMsg('Teleported to '+((roomThemes[key]||{}).name||key)+'.');});
 $('#noclipToggle').addEventListener('click',function(){if(!G)return;G.freeNoClip=!G.freeNoClip;this.textContent='Noclip: '+(G.freeNoClip?'ON':'OFF');this.setAttribute('aria-pressed',String(G.freeNoClip));commandMsg('Noclip '+(G.freeNoClip?'enabled — walls no longer block you.':'disabled — walls block movement.'));});
 $('#flashlightToggle').addEventListener('click',function(){if(!G)return;G.freeFlashlight=!G.freeFlashlight;this.textContent='Flashlight: '+(G.freeFlashlight?'ON':'OFF');this.setAttribute('aria-pressed',String(G.freeFlashlight));commandMsg('Flashlight '+(G.freeFlashlight?'on.':'off.'));});
-$('#monsterAiToggle').addEventListener('click',function(){if(!G)return;G.freeMonsterAI=!G.freeMonsterAI;this.textContent='Monster AI: '+(G.freeMonsterAI?'ACTIVE':'FROZEN');this.setAttribute('aria-pressed',String(G.freeMonsterAI));commandMsg('Free Mode monster AI '+(G.freeMonsterAI?'activated. Monsters will chase and kill you if they catch you.':'frozen.'));});
+$('#monsterAiToggle').addEventListener('click',function(){if(!G)return;G.freeMonsterAI=!G.freeMonsterAI;this.textContent='Monster AI: '+(G.freeMonsterAI?'ACTIVE':'FROZEN');this.setAttribute('aria-pressed',String(G.freeMonsterAI));commandMsg('Free Mode monster AI '+(G.freeMonsterAI?'activated. Monsters will approach you.':'frozen.'));});
 $('#placeMonster').addEventListener('click',function(){if(!G)return;if(!G.freeMode)enterFreeMode(true);var id=$('#monsterPick').value,c=getMonster(id);if(!c){spawnMonster(id);c=getMonster(id);}if(c){c.freePos=findOpen(G.player.x+Math.cos(G.player.a)*1.4,G.player.y+Math.sin(G.player.a)*1.4,G.player);c.wp=null;c.room=roomAt(c.freePos.x,c.freePos.y);commandMsg(c.name+' placed nearby.');}});
 $('#spawnMonster').addEventListener('click',function(){spawnMonster($('#monsterPick').value);});
 $('#removeMonster').addEventListener('click',function(){removeMonster($('#monsterPick').value);});
-$('#spawnAll').addEventListener('click',function(){Object.keys(monsterDefs).forEach(spawnMonster);commandMsg('Spawn-all complete. Monsters are spread across the building. Active monsters: '+G.chars.length+'.');});
+$('#spawnAll').addEventListener('click',function(){Object.keys(monsterDefs).forEach(spawnMonster);commandMsg('Spawn-all command complete. Active monsters: '+G.chars.length+'.');});
 $('#removeAll').addEventListener('click',function(){G.chars=[];commandMsg('All monsters cleared from the building.');syncUI();});
 $('#summonScare').addEventListener('click',triggerCommandScare);
 $('#resetFree').addEventListener('click',function(){if(G){G.player=FREE_START();G.manualScare=null;commandMsg('Free-roam position reset to the lobby.');}});
@@ -621,12 +613,6 @@ function updateFree(dt){
   if(!c.freePos){var rp=roomPos[c.room]||roomPos.HALL;c.freePos={x:rp[0]+((c.idx%3)-1)*.38,y:rp[1]+(Math.floor(c.idx/3))*.3};}
   var fp=c.freePos,ddx=p.x-fp.x,ddy=p.y-fp.y,dist=Math.hypot(ddx,ddy);
   if(dist<minD)minD=dist;
-  /* A chasing monster kills the player when it reaches them. */
-  if(G.freeMonsterAI&&dist<.62){
-   doScare({id:c.id,name:c.name});
-   commandMsg(c.name+' caught you! You were killed.');
-   return;
-  }
   if(!G.freeMonsterAI)return;
   var spd=MON_SPEED[c.id]||.7;
   if(c.id==='hob'&&seenBy(p,fp))spd=0;
@@ -1168,11 +1154,14 @@ document.querySelectorAll('[data-act]').forEach(function(b){
 document.querySelectorAll('[data-cam]').forEach(function(b){
   b.addEventListener('click',function(){pickCam(parseInt(b.getAttribute('data-cam'),10));});
 });
-document.querySelectorAll('[data-night]').forEach(function(b){
-  b.addEventListener('click',function(){startNight(parseInt(b.getAttribute('data-night'),10));});
+$('#startBtn').addEventListener('click',function(){
+  var n=savedNight();
+  if(n>NIGHTS){saveNight(1);n=1;}
+  startNight(n);
 });
+$('#resetBtn').addEventListener('click',function(){saveNight(1);bestText();startNight(1);});
 $('#again').addEventListener('click',function(){startNight(G.night);});
-$('#nextNight').addEventListener('click',function(){startNight(Math.min(3,G.night+1));});
+$('#nextNight').addEventListener('click',function(){startNight(Math.min(NIGHTS,G.night+1));});
 $('#toMenu').addEventListener('click',function(){bestText();show('menu');});
 window.addEventListener('keydown',function(e){
   if(!G||G.state!=='play'||$('#game').hidden||G.freeMode)return;
