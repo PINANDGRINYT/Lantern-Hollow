@@ -1,4 +1,3 @@
-
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Lantern Hollow Horror</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -112,6 +111,21 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
 @media (pointer:fine){#touchPad{display:none!important}}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}.btn:hover{transform:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* Player-facing controls reference panel */
+#controlsPanel[hidden]{display:none!important}
+#controlsPanel{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.82);backdrop-filter:blur(5px)}
+.controls-card{width:min(900px,100%);max-height:min(88vh,900px);overflow:auto;border:1px solid #8a6034;background:linear-gradient(145deg,#211b1b,#0b0b0e 78%);box-shadow:0 25px 100px #000;padding:clamp(16px,3vw,28px);color:var(--paper)}
+.controls-title{display:flex;justify-content:space-between;align-items:center;gap:12px;position:sticky;top:-1px;background:#171316;padding:8px 0 14px;z-index:1;border-bottom:1px solid #4b392b}
+.controls-title h2{font-family:var(--display);font-size:clamp(24px,4vw,34px);margin:0}
+.controls-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}
+.controls-group{border:1px solid #3c3433;background:rgba(255,255,255,.025);padding:13px;min-width:0}
+.controls-group h3{margin:0 0 10px;color:var(--amber);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.controls-row{display:grid;grid-template-columns:minmax(105px,auto) 1fr;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:12px;align-items:start}
+.controls-row:last-child{border-bottom:0}
+.controls-row kbd{display:inline-block;background:#28242a;border:1px solid #655747;border-bottom-width:2px;border-radius:3px;padding:2px 6px;color:#f4e8d2;font:600 11px var(--body);white-space:normal}
+.controls-row span{color:#c4bba9}
+.controls-note{font-size:11px;color:var(--dim);margin:14px 0 0}
+@media(max-width:600px){.controls-grid{grid-template-columns:1fr}.controls-row{grid-template-columns:105px 1fr}#controlsPanel{padding:8px}.controls-card{max-height:94vh}}
 </style>
 
 <main class="wrap">
@@ -136,6 +150,7 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
     </div>
     <div class="btnrow">
       <button class="btn night primary" id="startBtn" type="button">Start night 1<small id="startSub">They are slow and sleepy</small></button>
+      <button class="btn" type="button" data-open-controls>Controls &amp; Help</button>
       <button class="btn" id="resetBtn" type="button" hidden>Start over from night 1</button>
     </div>
   </section>
@@ -151,7 +166,7 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;gap:12px">
-    <div class="fsrow"><button class="btn" id="fsBtn" type="button">Full screen</button></div>
+    <div class="fsrow"><button class="btn" type="button" data-open-controls>Controls &amp; Help</button><button class="btn" id="fsBtn" type="button">Full screen</button></div>
     <div class="screen" role="img" aria-label="Lantern Hollow surveillance game display"><canvas id="c" width="960" height="540" aria-label="Game screen"></canvas></div>
     <div class="bar camsel" id="camBar" hidden>
       <button class="btn" data-cam="1">Cam 1</button>
@@ -202,6 +217,49 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
       <p class="keys" id="freeHelp" hidden>3D CONTROLS: W/A/S/D move · mouse look · Shift sprint · Shift sprint · N noclip · L flashlight · M map · Ctrl+C console · F exits free mode.</p>
     </section>
   </div>
+  <section id="controlsPanel" hidden role="dialog" aria-modal="true" aria-labelledby="controlsTitle">
+    <div class="controls-card">
+      <div class="controls-title"><h2 id="controlsTitle">Survivor's Control Manual</h2><button class="btn primary" id="closeControls" type="button" aria-label="Close controls">Close ✕</button></div>
+      <p class="controls-note">All controls at a glance. Some keys only work in the mode listed. You can open this panel anytime with <kbd>F1</kbd> or the Controls &amp; Help button.</p>
+      <div class="controls-grid">
+        <section class="controls-group"><h3>Night survival</h3>
+          <div class="controls-row"><kbd>A</kbd><span>Toggle west door</span></div>
+          <div class="controls-row"><kbd>D</kbd><span>Toggle east door</span></div>
+          <div class="controls-row"><kbd>Q</kbd><span>Toggle west light</span></div>
+          <div class="controls-row"><kbd>E</kbd><span>Toggle east light during a night</span></div>
+          <div class="controls-row"><kbd>Space</kbd><span>Raise or lower the security monitor</span></div>
+          <div class="controls-row"><kbd>1–9</kbd><span>Switch to cameras 1–9 while the monitor is up</span></div>
+          <div class="controls-row"><kbd>0</kbd><span>Switch to camera 10</span></div>
+          <div class="controls-row"><kbd>-</kbd><span>Switch to camera 11</span></div>
+        </section>
+        <section class="controls-group"><h3>3D Free Mode</h3>
+          <div class="controls-row"><kbd>W / S</kbd><span>Walk forward / backward</span></div>
+          <div class="controls-row"><kbd>A / D</kbd><span>Strafe left / right</span></div>
+          <div class="controls-row"><kbd>Mouse</kbd><span>Look around; click the game view if mouse look needs focus</span></div>
+          <div class="controls-row"><kbd>Shift</kbd><span>Sprint</span></div>
+          <div class="controls-row"><kbd>L</kbd><span>Toggle flashlight</span></div>
+          <div class="controls-row"><kbd>N</kbd><span>Toggle noclip (walk through walls)</span></div>
+          <div class="controls-row"><kbd>M</kbd><span>Toggle minimap</span></div>
+          <div class="controls-row"><kbd>F</kbd><span>Exit Free Mode and return to night survival</span></div>
+          <div class="controls-row"><kbd>P</kbd><span>Pause / resume Free Mode</span></div>
+        </section>
+        <section class="controls-group"><h3>Investigation &amp; threats</h3>
+          <div class="controls-row"><kbd>E</kbd><span>Investigate / collect a nearby case file in Free Mode</span></div>
+          <div class="controls-row"><kbd>J</kbd><span>Open or close the investigation journal</span></div>
+          <div class="controls-row"><kbd>T</kbd><span>Open or close the monster threat tracker</span></div>
+          <div class="controls-row"><kbd>Esc</kbd><span>Close the journal or exit pseudo-fullscreen where supported</span></div>
+          <div class="controls-row"><kbd>F1</kbd><span>Show or hide this controls panel</span></div>
+        </section>
+        <section class="controls-group"><h3>Command console</h3>
+          <div class="controls-row"><kbd>Ctrl + C</kbd><span>Show or hide the command console during the game</span></div>
+          <div class="controls-row"><kbd>Console buttons</kbd><span>Spawn/remove monsters, summon a safe jumpscare preview, teleport, toggle AI, flashlight and noclip</span></div>
+          <div class="controls-row"><kbd>Free Mode button</kbd><span>Enter or exit first-person exploration</span></div>
+          <div class="controls-row"><kbd>Touch controls</kbd><span>On touch devices, use the on-screen movement buttons when they appear</span></div>
+        </section>
+      </div>
+      <p class="controls-note">Tip: In Free Mode, E is used for investigation instead of the east light. The console is a sandbox tool; command-panel jumpscares are previews and should not end your night.</p>
+    </div>
+  </section>
 </main>
 
 <script>
@@ -1994,6 +2052,23 @@ function loop(ts){
   requestAnimationFrame(loop);
 }
 
+// Controls panel can be opened from the menu, during a night, or in Free Mode.
+var lhControlsPanel=document.getElementById('controlsPanel');
+function lhToggleControls(force){
+ if(!lhControlsPanel)return;
+ var show=typeof force==='boolean'?force:lhControlsPanel.hidden;
+ lhControlsPanel.hidden=!show;
+ if(show){var close=document.getElementById('closeControls');if(close)close.focus();}
+}
+document.querySelectorAll('[data-open-controls]').forEach(function(b){b.addEventListener('click',function(){lhToggleControls(true);});});
+document.getElementById('closeControls').addEventListener('click',function(){lhToggleControls(false);});
+lhControlsPanel.addEventListener('click',function(e){if(e.target===lhControlsPanel)lhToggleControls(false);});
+window.addEventListener('keydown',function(e){
+ if(e.key==='F1'){
+  e.preventDefault();lhToggleControls();return;
+ }
+ if(e.key==='Escape'&&lhControlsPanel&&!lhControlsPanel.hidden){lhToggleControls(false);return;}
+});
 newGame(1);
 bestText();
 requestAnimationFrame(loop);
