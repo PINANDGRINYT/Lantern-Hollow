@@ -73,6 +73,20 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
 .bar .btn{min-width:0}
 .bar .btn{padding:10px 6px;text-align:center}
 .keys{margin:0;font-size:12px;color:var(--dim)}
+.fsrow{display:flex;justify-content:flex-end}
+.fsrow .btn{min-height:38px;padding:8px 14px}
+/* full screen: the whole game area (screen plus controls) fills the display, picture stays 16:9 */
+#game:fullscreen,#game.pseudo-fs{background:var(--ink);justify-content:flex-start;justify-content:safe center;gap:8px;overflow:auto;
+  padding:10px max(10px,env(safe-area-inset-right,0px)) 10px max(10px,env(safe-area-inset-left,0px))}
+#game.pseudo-fs{position:fixed;inset:0;z-index:100;padding-top:max(10px,env(safe-area-inset-top,0px));padding-bottom:max(10px,env(safe-area-inset-bottom,0px))}
+#game:fullscreen .screen,#game.pseudo-fs .screen{aspect-ratio:16/9;width:min(100%,calc((100vh - 200px)*1.7778));margin:0 auto;flex:none}
+#game:fullscreen .keys,#game.pseudo-fs .keys{display:none}
+#game:fullscreen .bar .btn,#game.pseudo-fs .bar .btn{min-height:40px;padding-block:8px}
+@supports (height:100dvh){#game:fullscreen .screen,#game.pseudo-fs .screen{width:min(100%,calc((100dvh - 200px)*1.7778))}}
+@media (max-height:520px){
+  #game:fullscreen .screen,#game.pseudo-fs .screen{width:min(100%,calc((100vh - 130px)*1.7778))}
+  #game:fullscreen .bar .btn,#game.pseudo-fs .bar .btn{min-height:34px;font-size:10px;padding:6px 4px}
+}
 #commandPanel[hidden]{display:none!important}
 .command-panel{border:1px solid #6b4b2b;background:linear-gradient(145deg,rgba(34,27,25,.98),rgba(13,12,16,.99));padding:16px;display:grid;gap:12px;box-shadow:inset 0 1px rgba(255,190,90,.08),0 12px 28px rgba(0,0,0,.24)}
 .command-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -136,6 +150,7 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;gap:12px">
+    <div class="fsrow"><button class="btn" id="fsBtn" type="button">Full screen</button></div>
     <div class="screen" role="img" aria-label="Lantern Hollow surveillance game display"><canvas id="c" width="960" height="540" aria-label="Game screen"></canvas></div>
     <div class="bar camsel" id="camBar" hidden>
       <button class="btn" data-cam="1">Cam 1</button>
@@ -400,7 +415,26 @@ function winGame(){
 }
 
 /* ---------- screens ---------- */
+/* full screen: real browser full screen when allowed, otherwise a page-filling overlay */
+function isFs(){var g=$('#game');return document.fullscreenElement===g||g.classList.contains('pseudo-fs');}
+function syncFs(){$('#fsBtn').textContent=isFs()?'Exit full screen':'Full screen';}
+function setFs(on){
+  var g=$('#game');
+  if(on){
+    var r=null;
+    try{r=g.requestFullscreen?g.requestFullscreen():null;}catch(e){r=null;}
+    if(r&&r.catch)r.catch(function(){g.classList.add('pseudo-fs');syncFs();});
+    else if(!r)g.classList.add('pseudo-fs');
+  }else{
+    g.classList.remove('pseudo-fs');
+    if(document.fullscreenElement&&document.exitFullscreen){try{document.exitFullscreen();}catch(e){}}
+  }
+  syncFs();
+}
+document.addEventListener('fullscreenchange',syncFs);
+window.addEventListener('keydown',function(e){if(e.key==='Escape'&&$('#game').classList.contains('pseudo-fs'))setFs(false);});
 function show(id){
+  if(id!=='game')setFs(false);
   ['menu','end','game'].forEach(function(k){$('#'+k).hidden=(k!==id);});
   if(id==='game'){$('#game').style.display='flex';}
 }
@@ -1154,6 +1188,7 @@ document.querySelectorAll('[data-act]').forEach(function(b){
 document.querySelectorAll('[data-cam]').forEach(function(b){
   b.addEventListener('click',function(){pickCam(parseInt(b.getAttribute('data-cam'),10));});
 });
+$('#fsBtn').addEventListener('click',function(){setFs(!isFs());});
 $('#startBtn').addEventListener('click',function(){
   var n=savedNight();
   if(n>NIGHTS){saveNight(1);n=1;}
