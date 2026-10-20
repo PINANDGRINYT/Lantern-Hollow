@@ -475,7 +475,7 @@ function spawnMonster(id){
  var d=monsterDefs[id];if(!d)return;c={id:id,name:d.name,idx:d.idx,room:d.room,lvl:0,timer:999999,doorT:0};G.chars.push(c);commandMsg(d.name+' spawned in '+(CAMNAME[c.room]||c.room)+'.');sThud();syncUI();
 }
 function removeMonster(id){if(!G)return;var c=getMonster(id);if(!c){commandMsg((monsterDefs[id]||{name:id}).name+' is not active.');return;}G.chars=G.chars.filter(function(x){return x.id!==id;});commandMsg(c.name+' removed from the world.');sClick();syncUI();}
-function enterFreeMode(on){if(!G)return;G.freeMode=!!on;G.cam=false;G.manualScare=null;G.freeKeys={};if(on){G.powerOut=false;G.power=Math.max(100,G.power);G.player={x:2.5,y:1.5,a:0};G.chars.forEach(function(c){c.timer=999999;});commandMsg('3D Free Mode active — explore freely. Monsters are frozen until you command them.');}else{commandMsg('Free mode disabled. Night survival resumed.');G.t=Math.min(G.t,HOUR*5.95);}syncUI();}
+function enterFreeMode(on){if(!G)return;G.freeMode=!!on;G.cam=false;G.manualScare=null;G.freeKeys={};if(on){G.powerOut=false;G.power=Math.max(100,G.power);G.player={x:2.5,y:1.5,a:0};G.freeMonsterAI=true;var aiBtn=$('#monsterAiToggle');if(aiBtn){aiBtn.textContent='Monster AI: ACTIVE';aiBtn.setAttribute('aria-pressed','true');}G.chars.forEach(function(c){c.timer=999999;});commandMsg('3D Free Mode active — monsters will hunt and chase you! Use Monster AI to freeze them.');}else{commandMsg('Free mode disabled. Night survival resumed.');G.t=Math.min(G.t,HOUR*5.95);}syncUI();}
 function triggerCommandScare(){if(!G)return;var id=$('#scarePick').value;if(id==='selected')id=$('#monsterPick').value;var c=id==='lamp'?{id:'lamp',name:'The Lamplighter'}:getMonster(id);if(!c){spawnMonster(id);c=getMonster(id);}if(!c)return;if(G.state!=='play'&&!G.freeMode){commandMsg('Start a night or enter Free Mode to preview a jumpscare.');return;}/* Command-panel scares are visual previews only: never call doScare(), which ends the night. */G.manualScare={c:c,t:0};sScare();commandMsg('SAFE JUMPSCARE PREVIEW: '+c.name+' — you cannot die from a command-panel scare.');}
 $('#freeToggle').addEventListener('click',function(){enterFreeMode(!G.freeMode);});
 function toggleCommandPanel(force){var panel=$('#commandPanel');if(!panel||!G||$('#game').hidden)return;panel.hidden=typeof force==='boolean'?!force:!panel.hidden;if(!panel.hidden){commandMsg('Command Console open. Ctrl+C hides it.');}else{commandMsg('Command Console hidden. Press Ctrl+C to reopen it.');}if(document.pointerLockElement===cv&&document.exitPointerLock)document.exitPointerLock();}
@@ -498,6 +498,13 @@ window.addEventListener('keydown',function(e){if(!G||!G.freeMode||$('#game').hid
 window.addEventListener('keyup',function(e){if(G&&G.freeKeys)G.freeKeys[e.key.toLowerCase()]=false;});
 window.addEventListener('blur',function(){if(G)G.freeKeys={};});
 function solid(x,y){var mx=Math.floor(x),my=Math.floor(y);return !maze[my]||maze[my][mx]==='#';}
+function solidProp(x,y){
+ var blockers={bookshelf:.43,shelf:.32,cabinet:.31,desk:.42,couch:.48,chair:.25,barrel:.28,crate:.32,engine:.34,wheel:.25,trash:.22};
+ for(var i=0;i<roomProps.length;i++){var o=roomProps[i],r=blockers[o.type];if(!r)continue;var dx=x-o.x,dy=y-o.y;if(dx*dx+dy*dy<r*r)return true;}
+ return false;
+}
+function canStand(x,y){return !solid(x,y)&&!solidProp(x,y);}
+
 function updateFree(dt){
  G.freeT+=dt;if(G.manualScare){G.manualScare.t+=dt;if(G.manualScare.t>1.35)G.manualScare=null;}
  var p=G.player,k=G.freeKeys||{},speed=(k.shift?3.8:2.25)*dt,dx=0,dy=0;
@@ -506,8 +513,8 @@ function updateFree(dt){
  if(k.a){dx+=Math.cos(p.a-Math.PI/2)*speed;dy+=Math.sin(p.a-Math.PI/2)*speed;}
  if(k.d){dx+=Math.cos(p.a+Math.PI/2)*speed;dy+=Math.sin(p.a+Math.PI/2)*speed;}
  if(k.arrowleft)p.a-=dt*1.8;if(k.arrowright)p.a+=dt*1.8;
- if(G.freeNoClip){p.x=clamp(p.x+dx,.35,14.65);p.y=clamp(p.y+dy,.35,14.65);}else{if(!solid(p.x+dx*2,p.y))p.x=clamp(p.x+dx,.6,14.4);if(!solid(p.x,p.y+dy*2))p.y=clamp(p.y+dy,.6,14.4);}
- G.chars.forEach(function(c){if(!c.freePos){var rp=roomPos[c.room]||roomPos.HALL;c.freePos={x:rp[0]+((c.idx%3)-1)*.38,y:rp[1]+(Math.floor(c.idx/3))*.3};}if(G.freeMonsterAI){var vx=p.x-c.freePos.x,vy=p.y-c.freePos.y,dd=Math.hypot(vx,vy)||1,step=Math.min(.7*dt,Math.max(0,dd-.75));var nx=c.freePos.x+vx/dd*step,ny=c.freePos.y+vy/dd*step;if(G.freeNoClip||!solid(nx,c.freePos.y))c.freePos.x=clamp(nx,.5,14.5);if(G.freeNoClip||!solid(c.freePos.x,ny))c.freePos.y=clamp(ny,.5,14.5);c.room=roomAt(c.freePos.x,c.freePos.y);}});
+ if(G.freeNoClip){p.x=clamp(p.x+dx,.35,14.65);p.y=clamp(p.y+dy,.35,14.65);}else{if(canStand(p.x+dx*2,p.y))p.x=clamp(p.x+dx,.6,14.4);if(canStand(p.x,p.y+dy*2))p.y=clamp(p.y+dy,.6,14.4);}
+ G.chars.forEach(function(c){if(!c.freePos){var rp=roomPos[c.room]||roomPos.HALL;c.freePos={x:rp[0]+((c.idx%3)-1)*.38,y:rp[1]+(Math.floor(c.idx/3))*.3};}if(G.freeMonsterAI){var vx=p.x-c.freePos.x,vy=p.y-c.freePos.y,dd=Math.hypot(vx,vy)||1,step=Math.min(1.05*dt,Math.max(0,dd-.62));var nx=c.freePos.x+vx/dd*step,ny=c.freePos.y+vy/dd*step;/* Try direct pursuit, then axis slides and a small side-step so monsters don't freeze against corners. */if(G.freeNoClip){c.freePos.x=clamp(nx,.5,14.5);c.freePos.y=clamp(ny,.5,14.5);}else{var moved=false;if(!solid(nx,c.freePos.y)){c.freePos.x=clamp(nx,.5,14.5);moved=true;}if(!solid(c.freePos.x,ny)){c.freePos.y=clamp(ny,.5,14.5);moved=true;}if(!moved){var side=(Math.sin(G.freeT*2+c.idx)*.22)*dt;var sx=c.freePos.x+(-vy/dd)*side,sy=c.freePos.y+(vx/dd)*side;if(!solid(sx,sy)){c.freePos.x=clamp(sx,.5,14.5);c.freePos.y=clamp(sy,.5,14.5);}}}c.room=roomAt(c.freePos.x,c.freePos.y);}});
 }
 var roomThemes={
  STAGE:{name:'Grand Stage',wall:[104,32,43],floor:[53,29,31],accent:'#c24b50'},HALL:{name:'Main Hall',wall:[83,68,54],floor:[42,37,32],accent:'#d7a35b'},WEST:{name:'West Passage',wall:[55,70,75],floor:[27,35,38],accent:'#78a3a5'},EAST:{name:'East Passage',wall:[76,61,75],floor:[38,29,40],accent:'#b88cbb'},SHOP:{name:'Workshop',wall:[91,74,49],floor:[43,37,27],accent:'#d7a34d'},LOBBY:{name:'Front Lobby',wall:[91,56,39],floor:[49,34,27],accent:'#f0b85c'},DRESS:{name:'Dressing Room',wall:[88,49,63],floor:[44,28,39],accent:'#d77ca0'},BASEMENT:{name:'Basement',wall:[49,59,66],floor:[25,30,34],accent:'#86b4bf'},ARCHIVE:{name:'Prop Archive',wall:[81,70,47],floor:[39,34,25],accent:'#b6a16d'},GENERATOR:{name:'Generator Room',wall:[70,58,45],floor:[36,31,25],accent:'#e2a64e'},TUNNEL:{name:'Service Tunnel',wall:[49,54,59],floor:[24,27,31],accent:'#8dabb8'}
@@ -539,6 +546,38 @@ var roomProps=[
  {room:'GENERATOR',x:12.5,y:12.7,type:'switchboard'},{room:'GENERATOR',x:14.0,y:13.6,type:'pipe'},{room:'GENERATOR',x:11.0,y:13.7,type:'vent'},
  {room:'TUNNEL',x:7.4,y:14.0,type:'stain'},{room:'TUNNEL',x:9.2,y:13.8,type:'switchboard'},{room:'TUNNEL',x:6.1,y:13.4,type:'wheel'}
 ];
+/* Keep wall-mounted objects and tall furniture physically aligned with the map's wall grid.
+   Several legacy coordinates sat inside wall cells or out in the room, making props look
+   detached. Anchor wall pieces just inside the nearest clear cell, and push furniture's
+   backs toward that same wall so bookcases and cabinets sit naturally in the room. */
+var WALL_PROP_TYPES=['curtain','spotlight','portrait','pipe','cable','lamp','mirror','vent','stain','clock','speaker','switchboard','tools'];
+var WALL_BACKED_TYPES=['bookshelf','shelf','cabinet','desk','couch','vanity'];
+function wallAnchorFor(o,gap){
+ var best=null,bestScore=Infinity,ox=o.x,oy=o.y;
+ for(var cy=1;cy<15;cy++)for(var cx=1;cx<15;cx++){
+  if(!maze[cy]||maze[cy][cx]==='#')continue;
+  var edges=[];
+  if(maze[cy][cx-1]==='#')edges.push([cx+gap,clamp(oy,cy+.12,cy+.88)]);
+  if(maze[cy][cx+1]==='#')edges.push([cx+1-gap,clamp(oy,cy+.12,cy+.88)]);
+  if(maze[cy-1]&&maze[cy-1][cx]==='#')edges.push([clamp(ox,cx+.12,cx+.88),cy+gap]);
+  if(maze[cy+1]&&maze[cy+1][cx]==='#')edges.push([clamp(ox,cx+.12,cx+.88),cy+1-gap]);
+  for(var ei=0;ei<edges.length;ei++){
+   var ax=edges[ei][0],ay=edges[ei][1],distance=Math.hypot(ax-ox,ay-oy);
+   /* Prefer a wall in the prop's assigned room unless another wall is clearly closer. */
+   var penalty=(roomAt(ax,ay)!==o.room)?.45:0,score=distance+penalty;
+   if(score<bestScore){bestScore=score;best={x:ax,y:ay};}
+  }
+ }
+ return best;
+}
+function anchorRoomPropsToWalls(){
+ roomProps.forEach(function(o){
+  var gap=WALL_PROP_TYPES.indexOf(o.type)>=0?.075:(WALL_BACKED_TYPES.indexOf(o.type)>=0?.16:null);
+  if(gap===null)return;
+  var a=wallAnchorFor(o,gap);if(a){o.x=a.x;o.y=a.y;o.wallAnchored=true;}
+ });
+}
+anchorRoomPropsToWalls();
 function drawRoomProp(type,x,y,sc,accent){
  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.lineWidth=2;ctx.strokeStyle='rgba(0,0,0,.8)';ctx.fillStyle='#29231f';
  if(type==='curtain'){ctx.fillStyle='#4b111e';ctx.fillRect(-30,-92,60,92);ctx.fillStyle='#8e2934';for(var i=-25;i<=25;i+=13){ctx.beginPath();ctx.moveTo(i,-90);ctx.lineTo(i-5,0);ctx.lineTo(i+5,0);ctx.closePath();ctx.fill();}ctx.strokeRect(-30,-92,60,92);}
@@ -547,34 +586,52 @@ function drawRoomProp(type,x,y,sc,accent){
  else if(type==='pipe'||type==='cable'){ctx.strokeStyle=type==='pipe'?'#66757a':'#17191d';ctx.lineWidth=type==='pipe'?9:5;ctx.beginPath();ctx.moveTo(-18,-95);ctx.lineTo(-18,0);ctx.lineTo(18,0);ctx.lineTo(18,-65);ctx.stroke();ctx.strokeStyle='#a9a18b';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-23,-60);ctx.lineTo(-13,-60);ctx.moveTo(13,-28);ctx.lineTo(23,-28);ctx.stroke();}
  else if(type==='lamp'){ctx.fillStyle='#1d1b1b';ctx.fillRect(-3,-80,6,80);ctx.fillStyle='#d7a34d';ctx.beginPath();ctx.moveTo(-15,-78);ctx.lineTo(15,-78);ctx.lineTo(8,-62);ctx.lineTo(-8,-62);ctx.closePath();ctx.fill();ctx.fillStyle='rgba(240,167,60,.2)';ctx.beginPath();ctx.moveTo(-8,-62);ctx.lineTo(-28,4);ctx.lineTo(28,4);ctx.lineTo(8,-62);ctx.fill();}
  else if(type==='bookshelf'){
-  /* Built-in, floor-seated bookcase: toe-kick, side panels, backboard, fixed shelves and wall brackets. */
-  ctx.fillStyle='rgba(0,0,0,.42)';ctx.beginPath();ctx.ellipse(0,1,47,8,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#201711';ctx.fillRect(-42,-108,84,108);
-  ctx.fillStyle='#4b3322';ctx.fillRect(-38,-105,76,101);
-  ctx.fillStyle='#775638';ctx.fillRect(-43,-110,86,7);ctx.fillRect(-43,-5,86,7);
-  ctx.fillStyle='#8b6942';ctx.fillRect(-39,-105,7,100);ctx.fillRect(32,-105,7,100);
-  ctx.fillStyle='#302116';ctx.fillRect(-31,-101,62,92);
-  [-79,-56,-33,-10].forEach(function(by,bi){
-   ctx.fillStyle='#8a6742';ctx.fillRect(-33,by,66,5);
-   ctx.fillStyle='#2a1b12';ctx.fillRect(-33,by+5,66,2);
-   var bx=-29;for(var bk=0;bk<7;bk++){
-    var bw=6+(bk%3)*1.6,bh=12+(bk%4)*2;
-    ctx.fillStyle=['#6d302b','#8b7048','#303d40','#9b8766','#4b2937','#776047','#343b2c'][(bk+bi)%7];
-    ctx.fillRect(bx,by-bh,bw,bh);
-    ctx.fillStyle='rgba(255,225,170,.18)';ctx.fillRect(bx+1,by-bh+2,1,Math.max(2,bh-4));
-    ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(bx+bw-1,by-bh,1,bh);
-    bx+=bw+2;
-   }
+  /* Heavy floor-standing bookcase: cast shadow, side depth, plinth, individual shelves,
+     varied books, worn edges, cabinet doors and visible wall-fixing hardware. */
+  ctx.fillStyle='rgba(0,0,0,.48)';ctx.beginPath();ctx.ellipse(3,2,51,9,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#17100c';ctx.beginPath();ctx.moveTo(-43,-108);ctx.lineTo(-34,-116);ctx.lineTo(48,-116);ctx.lineTo(43,-108);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#3c281a';ctx.beginPath();ctx.moveTo(43,-108);ctx.lineTo(49,-115);ctx.lineTo(49,-9);ctx.lineTo(43,-3);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#543821';ctx.fillRect(-43,-110,86,108);
+  ctx.fillStyle='#7e5a36';ctx.fillRect(-43,-110,86,7);ctx.fillRect(-43,-7,86,7);
+  ctx.fillStyle='#9a7549';ctx.fillRect(-40,-105,6,96);ctx.fillRect(34,-105,6,96);
+  ctx.fillStyle='#21170f';ctx.fillRect(-33,-102,66,91);
+  [-80,-57,-34,-11].forEach(function(by,bi){
+    ctx.fillStyle='#8b6841';ctx.fillRect(-34,by,68,4);
+    ctx.fillStyle='#25180f';ctx.fillRect(-34,by+4,68,2);
+    var bx=-31;
+    for(var bk=0;bk<8;bk++){
+      var bw=[6,7,5,8,6,7,5,7][(bk+bi)%8],bh=[13,17,11,19,15,12,18,14][(bk*3+bi)%8];
+      var colors=['#73352d','#a08a62','#33474a','#8c6944','#4c3449','#5c6745','#b29a70','#3c2b22'];
+      ctx.fillStyle=colors[(bk+bi*2)%colors.length];ctx.fillRect(bx,by-bh,bw,bh);
+      ctx.fillStyle='rgba(255,224,167,.23)';ctx.fillRect(bx+1,by-bh+2,1,Math.max(3,bh-4));
+      ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(bx+bw-1,by-bh,1,bh);
+      if((bk+bi)%3===0){ctx.fillStyle='#c7ae7a';ctx.fillRect(bx+1,by-bh+4,Math.max(2,bw-2),1);}
+      bx+=bw+1.2;
+    }
   });
-  ctx.fillStyle='#39271a';ctx.fillRect(-39,-10,78,7);ctx.fillStyle='#5d432b';ctx.fillRect(-42,-9,84,4);
-  ctx.fillStyle='#17120f';ctx.strokeStyle='#17120f';ctx.lineWidth=2;ctx.strokeRect(-38,-105,76,101);
-  /* Small iron wall straps visually fasten the bookcase into the room wall. */
-  ctx.fillStyle='#34383a';ctx.fillRect(-42,-91,5,12);ctx.fillRect(37,-91,5,12);ctx.fillStyle='#b0a18a';ctx.fillRect(-41,-89,2,2);ctx.fillRect(38,-89,2,2);
+  /* Lower cupboards make the object read as built furniture, not floating sprites. */
+  ctx.fillStyle='#4b321f';ctx.fillRect(-34,-29,68,20);
+  ctx.fillStyle='#68482d';ctx.fillRect(-31,-27,30,16);ctx.fillRect(1,-27,30,16);
+  ctx.strokeStyle='#20160f';ctx.lineWidth=2;ctx.strokeRect(-31,-27,30,16);ctx.strokeRect(1,-27,30,16);
+  ctx.fillStyle='#c3a06a';ctx.fillRect(-5,-20,3,5);ctx.fillRect(3,-20,3,5);
+  ctx.fillStyle='#b18a55';ctx.fillRect(-44,-112,88,4);ctx.fillRect(-44,-5,88,4);
+  ctx.strokeStyle='#17110c';ctx.lineWidth=2;ctx.strokeRect(-40,-106,80,99);
+  /* Metal wall straps and screws visually anchor it to the room. */
+  ctx.fillStyle='#34383a';ctx.fillRect(-44,-94,5,13);ctx.fillRect(39,-94,5,13);
+  ctx.fillStyle='#c2b39a';ctx.fillRect(-43,-91,2,2);ctx.fillRect(40,-91,2,2);
+  ctx.fillStyle='rgba(255,220,160,.08)';ctx.fillRect(-36,-101,2,88);
  }
- else if(type==='shelf'){ctx.fillStyle='#34251a';ctx.fillRect(-27,-82,54,82);ctx.strokeStyle='#99744a';ctx.strokeRect(-27,-82,54,82);[-61,-39,-17].forEach(function(y){ctx.fillStyle='#73553b';ctx.fillRect(-25,y,50,5);ctx.fillStyle='#9b3b32';ctx.fillRect(-18,y-13,12,13);ctx.fillStyle='#b59a64';ctx.fillRect(2,y-17,15,17);});}
- else if(type==='desk'){ctx.fillStyle='#4d3020';ctx.fillRect(-37,-35,74,35);ctx.fillStyle='#825433';ctx.fillRect(-42,-40,84,9);ctx.fillStyle='#d4a95d';ctx.fillRect(-17,-56,34,16);ctx.fillStyle='#161515';ctx.fillRect(-13,-52,26,8);}
+ else if(type==='shelf'){
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(2,1,34,7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#24180f';ctx.fillRect(-29,-84,58,84);ctx.fillStyle='#5b3d25';ctx.fillRect(-26,-81,52,78);
+  ctx.fillStyle='#21170f';ctx.fillRect(-21,-77,42,70);
+  [-61,-39,-17].forEach(function(y,si){ctx.fillStyle='#8b6741';ctx.fillRect(-25,y,50,5);ctx.fillStyle='#342318';ctx.fillRect(-25,y+4,50,2);
+   for(var j=0;j<5;j++){var bx=-21+j*9,bh=9+((j+si)%3)*4;ctx.fillStyle=['#7e3730','#8d7955','#3b4b48','#5c394c','#a58a5c'][(j+si)%5];ctx.fillRect(bx,y-bh,7,bh);ctx.fillStyle='rgba(255,230,180,.2)';ctx.fillRect(bx+1,y-bh+2,1,bh-3);}
+  });ctx.fillStyle='#8b6741';ctx.fillRect(-30,-86,60,5);ctx.fillRect(-30,-4,60,5);ctx.fillStyle='#302116';ctx.fillRect(-25,-14,50,10);ctx.strokeStyle='#17100b';ctx.strokeRect(-29,-84,58,84);
+ }
+ else if(type==='desk'){ctx.fillStyle='rgba(0,0,0,.38)';ctx.beginPath();ctx.ellipse(2,1,47,8,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#2a1b12';ctx.fillRect(-35,-35,70,35);ctx.fillStyle='#624127';ctx.fillRect(-38,-38,76,8);ctx.fillStyle='#91653b';ctx.fillRect(-42,-44,84,8);ctx.fillStyle='#3b281a';ctx.fillRect(-30,-30,13,25);ctx.fillRect(17,-30,13,25);ctx.fillStyle='#b49a6a';ctx.fillRect(-17,-55,28,11);ctx.fillStyle='#19191a';ctx.fillRect(-13,-53,20,7);ctx.fillStyle='#c2b18a';ctx.fillRect(19,-50,9,6);ctx.strokeStyle='#24170f';ctx.strokeRect(-42,-44,84,44);}
  else if(type==='mirror'){ctx.fillStyle='#302322';ctx.fillRect(-26,-91,52,91);ctx.strokeStyle='#c59a62';ctx.lineWidth=5;ctx.strokeRect(-26,-91,52,91);ctx.fillStyle='rgba(140,181,187,.32)';ctx.fillRect(-19,-83,38,75);ctx.strokeStyle='rgba(220,220,200,.5)';ctx.beginPath();ctx.moveTo(-12,-72);ctx.lineTo(10,-28);ctx.stroke();}
- else if(type==='chair'){ctx.fillStyle='#39231f';ctx.fillRect(-20,-48,40,22);ctx.fillRect(-17,-72,34,26);ctx.fillRect(-16,-26,5,26);ctx.fillRect(11,-26,5,26);}
+ else if(type==='chair'){ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(0,1,25,6,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#211713';ctx.fillRect(-18,-72,36,45);ctx.fillStyle='#593a29';ctx.fillRect(-16,-70,32,39);ctx.fillStyle='#704b32';ctx.fillRect(-22,-31,44,7);ctx.fillStyle='#3b261b';ctx.fillRect(-19,-24,5,24);ctx.fillRect(14,-24,5,24);ctx.fillRect(-19,-68,4,38);ctx.fillStyle='#99714a';ctx.fillRect(-12,-29,24,3);ctx.strokeStyle='#20150f';ctx.strokeRect(-22,-72,44,48);}
  else if(type==='barrel'){ctx.fillStyle='#354147';ctx.beginPath();ctx.ellipse(0,-51,23,8,0,0,Math.PI*2);ctx.fill();ctx.fillRect(-23,-51,46,44);ctx.beginPath();ctx.ellipse(0,-7,23,8,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#8a9697';ctx.beginPath();ctx.moveTo(-22,-38);ctx.lineTo(22,-38);ctx.moveTo(-22,-20);ctx.lineTo(22,-20);ctx.stroke();}
  else if(type==='crate'){ctx.fillStyle='#59452b';ctx.fillRect(-28,-54,56,54);ctx.strokeStyle='#ad8a52';ctx.strokeRect(-28,-54,56,54);ctx.beginPath();ctx.moveTo(-27,-53);ctx.lineTo(27,-1);ctx.moveTo(27,-53);ctx.lineTo(-27,-1);ctx.stroke();}
  else if(type==='engine'){ctx.fillStyle='#292d2d';ctx.fillRect(-32,-76,64,76);ctx.fillStyle='#70553b';ctx.fillRect(-27,-70,54,12);ctx.fillStyle='#b33c27';ctx.beginPath();ctx.arc(0,-37,17,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#e7a44a';ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,-37,9,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#d9a34b';ctx.fillRect(-22,-15,12,7);ctx.fillRect(10,-15,12,7);}
@@ -620,14 +677,17 @@ function drawFree3D(){
  }
  /* Project room props into the 3D view and depth-test them against the walls. */
  var projected=[];roomProps.forEach(function(o){var dx=o.x-p.x,dy=o.y-p.y,d=Math.hypot(dx,dy),ang=Math.atan2(dy,dx)-p.a;while(ang>Math.PI)ang-=Math.PI*2;while(ang<-Math.PI)ang+=Math.PI*2;if(Math.abs(ang)<Math.PI/3&&d>.35){var sx=W/2+Math.tan(ang)*(W*.78),ix=clamp(Math.floor(sx/strip),0,cols-1);if(d<depths[ix]+.15)projected.push({o:o,d:d,sx:sx,ang:ang});}});projected.sort(function(a,b){return b.d-a.d;});
- /* Floor-plane projection keeps props and monsters planted on the ground. Wall-mounted pieces are raised relative to the same perspective ground line. */
+ /* Floor-plane projection keeps furniture planted. Wall pieces are now snapped to real wall edges,
+    so their vertical offset is measured from that wall's floor line rather than open-room space. */
  projected.forEach(function(sp){
-  var wallMounted=['curtain','portrait','clock','vent','switchboard','pipe','cable','lamp','mirror'].indexOf(sp.o.type)>=0;
+  var wallMounted=WALL_PROP_TYPES.indexOf(sp.o.type)>=0;
   var focal=H*.62,sc=clamp(1.08/sp.d,.045,.92),floorY=horizon+focal/Math.max(.35,sp.d);
-  var sy=wallMounted?floorY-H*.19/Math.max(.35,sp.d):floorY;
+  var sy=wallMounted?floorY-H*.205/Math.max(.35,sp.d):floorY;
   if(sp.o.type==='curtain')sc=clamp(1.9/sp.d,.08,1.25);
   if(['shelf','cabinet','engine','desk','couch'].indexOf(sp.o.type)>=0)sc=clamp(1.3/sp.d,.06,1.05);
   if(sp.o.type==='bookshelf')sc=clamp(2.15/sp.d,.10,1.35);
+  /* Make all free-roam props larger and easier to see, while keeping perspective depth scaling. */
+  sc=Math.min(sc*2.05,2.65);
   ctx.globalAlpha=clamp(1.35/sp.d,.24,1);drawRoomProp(sp.o.type,sp.sx,sy,sc,(roomThemes[sp.o.room]||theme).accent);ctx.globalAlpha=1;
  });
  var sprites=[];G.chars.forEach(function(c){var rp=c.freePos||roomPos[c.room]||roomPos.HALL;var dx=rp[0]-p.x,dy=rp[1]-p.y,d=Math.hypot(dx,dy),ang=Math.atan2(dy,dx)-p.a;while(ang>Math.PI)ang-=Math.PI*2;while(ang<-Math.PI)ang+=Math.PI*2;if(Math.abs(ang)<.65&&d>.25){var sx=W/2+Math.tan(ang)*(W*.78),ix=clamp(Math.floor(sx/strip),0,cols-1);if(d<depths[ix]+.12)sprites.push({c:c,d:d,ang:ang,sx:sx,ix:ix});}});sprites.sort(function(a,b){return b.d-a.d;});
