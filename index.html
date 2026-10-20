@@ -68,6 +68,16 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(24px,4.5vw,32px);m
 .screen{position:relative;aspect-ratio:16/9;max-width:100%;background:#000;border:1px solid #49404c;overflow:hidden;box-shadow:0 0 0 4px rgba(0,0,0,.22),0 18px 50px rgba(0,0,0,.28)}
 .screen:after{content:"";position:absolute;inset:0;pointer-events:none;border:1px solid rgba(240,167,60,.12);box-shadow:inset 0 0 80px rgba(0,0,0,.35),inset 0 0 2px rgba(255,220,170,.12)}
 .screen:before{content:"";position:absolute;z-index:2;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,220,170,.025),transparent 20%,transparent 78%,rgba(0,0,0,.16));mix-blend-mode:screen}
+
+/* More convincing monitor glass and hardware-like camera selector rail. */
+.screen{border:2px solid #534733;box-shadow:0 0 0 2px #100e11,0 0 0 5px rgba(165,126,75,.12),0 0 36px rgba(0,0,0,.72),inset 0 0 0 2px rgba(0,0,0,.7)}
+.screen:after{border:1px solid rgba(199,224,180,.16);box-shadow:inset 0 0 95px rgba(0,0,0,.48),inset 0 0 3px rgba(225,245,210,.18)}
+.screen:before{background:repeating-linear-gradient(0deg,rgba(220,245,215,.012) 0px,rgba(220,245,215,.012) 1px,transparent 1px,transparent 4px),linear-gradient(180deg,rgba(255,235,190,.035),transparent 18%,transparent 76%,rgba(0,0,0,.2));mix-blend-mode:screen}
+.camsel{padding:9px;background:linear-gradient(180deg,#17171a,#09090a);border:1px solid #39352d;box-shadow:inset 0 1px rgba(255,255,255,.035),0 5px 18px rgba(0,0,0,.24)}
+.camsel .btn{border-color:#34352f;background:linear-gradient(180deg,#171d18,#0d100d);color:#a8b79e}
+.camsel .btn[aria-pressed="true"]{background:linear-gradient(180deg,#b3c69f,#6f8d69);border-color:#d4e1c2;color:#11160f;box-shadow:0 0 16px rgba(143,184,128,.2)}
+.camsel .btn[aria-pressed="true"]:after{color:inherit}
+
 canvas{width:100%;height:100%;display:block;touch-action:manipulation}
 .bar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
 .bar .btn{min-width:0}
@@ -1624,6 +1634,114 @@ function drawCamRoom(room){
   }
 }
 
+/* Extra camera-art pass: architectural depth, aged surfaces, practical lights and floor perspective. */
+function drawCamArchitecture(room){
+  ctx.save();
+  /* Room grime is deterministic, so the walls do not shimmer between frames. */
+  for(var stain=0;stain<12;stain++){
+    var sx=(stain*173+67)%W, sy=35+((stain*97+29)%315), sr=22+(stain%4)*13;
+    var sg=ctx.createRadialGradient(sx,sy,1,sx,sy,sr);
+    sg.addColorStop(0,stain%3===0?'rgba(0,0,0,.16)':'rgba(0,0,0,.09)');
+    sg.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=sg;ctx.fillRect(sx-sr,sy-sr,sr*2,sr*2);
+  }
+  /* Fine plaster seams and aged wall trim give the flat scene a stronger scale. */
+  ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(218,194,148,.075)';
+  [86,101,351,365].forEach(function(y){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();});
+  for(var seam=0;seam<8;seam++){
+    var x=seam*137+28;
+    ctx.strokeStyle=seam%2?'rgba(0,0,0,.10)':'rgba(220,194,150,.035)';
+    ctx.beginPath();ctx.moveTo(x,30);ctx.lineTo(x+(seam%3-1)*5,340);ctx.stroke();
+  }
+  /* Real perspective floor joints, clipped to the floor plane so furniture stays in front. */
+  ctx.save();ctx.beginPath();ctx.moveTo(275,365);ctx.lineTo(685,365);ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.clip();
+  var floorTone=ctx.createLinearGradient(0,365,0,H);
+  floorTone.addColorStop(0,'rgba(210,180,130,.035)');floorTone.addColorStop(1,'rgba(0,0,0,.16)');
+  ctx.fillStyle=floorTone;ctx.fillRect(0,360,W,H-360);
+  ctx.strokeStyle='rgba(193,162,118,.12)';ctx.lineWidth=1;
+  for(var tile=0;tile<=12;tile++){
+    var tx=480+(tile-6)*38;
+    ctx.beginPath();ctx.moveTo(480+(tile-6)*7,365);ctx.lineTo(tx*1.9-432,H);ctx.stroke();
+  }
+  [382,402,428,459,497,540,590].forEach(function(y){
+    var yy=Math.min(H,y);ctx.beginPath();ctx.moveTo(480-(yy-365)*.58,yy);ctx.lineTo(480+(yy-365)*.58,yy);ctx.stroke();
+  });
+  /* Small floor scuffs and worn reflective patches. */
+  for(var sc=0;sc<22;sc++){
+    var fx=(sc*113+41)%W, fy=395+((sc*29)%135);
+    ctx.strokeStyle=sc%3===0?'rgba(205,177,132,.10)':'rgba(0,0,0,.12)';
+    ctx.beginPath();ctx.moveTo(fx,fy);ctx.lineTo(fx+7+(sc%5)*4,fy-1+(sc%3));ctx.stroke();
+  }
+  ctx.restore();
+
+  /* Practical light fixtures and pipes vary by room type. */
+  if(room==='GENERATOR'||room==='BASEMENT'||room==='TUNNEL'){
+    ctx.strokeStyle='rgba(126,150,132,.28)';ctx.lineWidth=5;
+    ctx.beginPath();ctx.moveTo(24,62);ctx.lineTo(W-24,62);ctx.lineTo(W-24,105);ctx.moveTo(145,0);ctx.lineTo(145,62);ctx.moveTo(805,0);ctx.lineTo(805,62);ctx.stroke();
+    for(var lamp=0;lamp<4;lamp++){
+      var lx=115+lamp*245, ly=83;
+      ctx.fillStyle='#171c18';ctx.fillRect(lx-29,ly-6,58,12);
+      var lg=ctx.createRadialGradient(lx,ly,2,lx,ly,90);
+      lg.addColorStop(0,room==='BASEMENT'?'rgba(194,83,49,.18)':'rgba(163,202,166,.15)');lg.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=lg;ctx.fillRect(lx-90,ly-2,180,155);
+      ctx.fillStyle=frame%72<3?'#d5b889':'#6f8b71';ctx.fillRect(lx-18,ly-2,36,3);
+    }
+  }else{
+    ctx.strokeStyle='rgba(205,173,126,.12)';ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(0,47);ctx.lineTo(W,47);ctx.stroke();
+    for(var light=0;light<3;light++){
+      var px=205+light*275, py=59+(light%2)*10;
+      ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(px-32,py+4,64,9);
+      ctx.fillStyle=room==='DRESS'?'rgba(201,90,115,.38)':'rgba(255,207,135,.30)';
+      ctx.fillRect(px-26,py,52,4);
+      var glow=ctx.createRadialGradient(px,py+2,0,px,py+2,100);
+      glow.addColorStop(0,room==='DRESS'?'rgba(178,62,94,.08)':'rgba(255,198,112,.09)');glow.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=glow;ctx.fillRect(px-100,py,200,190);
+    }
+  }
+  /* Camera-specific edge falloff and a restrained sensor bloom. */
+  var edge=ctx.createRadialGradient(W*.5,H*.48,H*.16,W*.5,H*.48,W*.8);
+  edge.addColorStop(0,'rgba(0,0,0,0)');edge.addColorStop(.72,'rgba(0,0,0,.025)');edge.addColorStop(1,'rgba(0,0,0,.18)');
+  ctx.fillStyle=edge;ctx.fillRect(0,0,W,H);
+  ctx.restore();
+}
+
+/* Fine optics pass: lens reflections, particulate drift and signal telemetry. */
+function drawCamOptics(room){
+  ctx.save();
+  /* Stable dust specks drift slowly through the camera's infrared beam. */
+  for(var d=0;d<24;d++){
+    var dx=(d*167+frame*(.18+(d%4)*.035))%(W+20)-10;
+    var dy=(d*83+Math.sin(frame*.018+d)*14)%(H-35)+15;
+    ctx.fillStyle=d%4===0?'rgba(220,238,204,.28)':'rgba(185,210,178,.12)';
+    ctx.beginPath();ctx.arc(dx,dy,.45+(d%3)*.32,0,Math.PI*2);ctx.fill();
+  }
+  /* A faint reticle and focus corners make the monitor read as an actual security feed. */
+  ctx.strokeStyle='rgba(198,224,185,.17)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(W*.5-12,H*.5);ctx.lineTo(W*.5-4,H*.5);ctx.moveTo(W*.5+4,H*.5);ctx.lineTo(W*.5+12,H*.5);ctx.moveTo(W*.5,H*.5-12);ctx.lineTo(W*.5,H*.5-4);ctx.moveTo(W*.5,H*.5+4);ctx.lineTo(W*.5,H*.5+12);ctx.stroke();
+  var focus=15+Math.sin(frame*.045)*2;
+  [[36,58,1,1],[W-36,58,-1,1],[36,H-58,1,-1],[W-36,H-58,-1,-1]].forEach(function(q){
+    ctx.strokeStyle='rgba(194,220,181,.22)';ctx.beginPath();ctx.moveTo(q[0],q[1]+q[3]*focus);ctx.lineTo(q[0],q[1]);ctx.lineTo(q[0]+q[2]*focus,q[1]);ctx.stroke();
+  });
+  /* Compact signal meter and camera timestamp panel. */
+  ctx.fillStyle='rgba(0,0,0,.32)';ctx.fillRect(W-162,34,132,18);
+  ctx.fillStyle='rgba(182,214,167,.66)';ctx.font='9px "IBM Plex Mono",monospace';ctx.textAlign='left';ctx.fillText('SIGNAL',W-155,46);
+  var signal=G.glitch>0?2:5;
+  for(var sb=0;sb<5;sb++){
+    ctx.fillStyle=sb<signal?(G.glitch>0?'rgba(226,99,76,.78)':'rgba(182,214,167,.72)'):'rgba(182,214,167,.16)';
+    ctx.fillRect(W-102+sb*12,47-(sb%3)*3,7,3+(sb%3)*3);
+  }
+  if(G.glitch>0){
+    ctx.fillStyle='rgba(155,15,12,.20)';ctx.fillRect(0,0,W,H);
+    if(Math.random()<.16){var sy=ri(35,H-35);ctx.fillStyle='rgba(222,238,210,.18)';ctx.fillRect(0,sy,W,1+ri(1,4));}
+  }
+  /* Soft glass reflection across the upper-right corner. */
+  var refl=ctx.createLinearGradient(W*.64,0,W*.95,H*.46);
+  refl.addColorStop(0,'rgba(230,240,220,0)');refl.addColorStop(.5,'rgba(230,240,220,.035)');refl.addColorStop(1,'rgba(230,240,220,0)');
+  ctx.fillStyle=refl;ctx.beginPath();ctx.moveTo(W*.69,0);ctx.lineTo(W*.91,0);ctx.lineTo(W,H*.35);ctx.lineTo(W,H*.48);ctx.closePath();ctx.fill();
+  ctx.restore();
+}
+
 /* Detailed camera set dressing: room-specific furniture, worn surfaces, and grounded shadows. */
 function drawCamFurniture(room){
   ctx.save();
@@ -1651,9 +1769,11 @@ function drawCamFurniture(room){
 }
 
 function drawCam(){
-  /* Keep room architecture, then layer detailed furniture into the CCTV image. */
-  drawCamRoom(camRoom());
-  drawCamFurniture(camRoom());
+  /* Build the picture in depth: architecture and floor perspective first, props in front. */
+  var room=camRoom();
+  drawCamRoom(room);
+  drawCamArchitecture(room);
+  drawCamFurniture(room);
 
   /* Camera catches wet highlights, deep shadows, and a brief predatory lens stare. */
   var stare=.5+.5*Math.sin(frame*.095);
@@ -1718,6 +1838,7 @@ function drawCam(){
   ctx.font='11px "IBM Plex Mono",monospace';ctx.fillStyle='rgba(182,214,167,.72)';
   ctx.fillText('00:'+String(Math.floor(frame/6)%60).padStart(2,'0')+'  /  6 FPS',W-24,22);
   if(Math.random()<.012){ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(0,0,W,H);}
+  drawCamOptics(camRoom());
 }
 
 /* ---------- scare ---------- */
