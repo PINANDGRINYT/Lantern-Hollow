@@ -332,7 +332,7 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
           <div class="controls-row"><kbd>Touch controls</kbd><span>On touch devices, use the on-screen movement buttons when they appear</span></div>
         </section>
       </div>
-      <p class="controls-note">Tip: In Free Mode, E is used for investigation instead of the east light. The console is a sandbox tool; command-panel jumpscares are previews and should not end your night.</p>
+      <p class="controls-note"><b>General:</b> Press <kbd>Z</kbd> at any time during gameplay or from the end screen to return to the main menu. Tip: In Free Mode, E is used for investigation instead of the east light. The console is a sandbox tool; command-panel jumpscares are previews and should not end your night.</p>
     </div>
   </section>
 </main>
@@ -578,6 +578,24 @@ function show(id){
   ['menu','end','game'].forEach(function(k){$('#'+k).hidden=(k!==id);});
   if(id==='game'){$('#game').style.display='flex';}
 }
+/* Z returns to the main menu from gameplay or the end screen. Capture the key before mode-specific controls can consume it. */
+window.addEventListener('keydown',function(e){
+  if(!e.key||e.key.toLowerCase()!=='z'||e.ctrlKey||e.metaKey||e.altKey||e.repeat)return;
+  var target=e.target;
+  if(target&&(target.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)))return;
+  var menu=document.getElementById('menu');
+  if(!G||!menu||!menu.hidden)return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  if(document.pointerLockElement&&document.exitPointerLock){try{document.exitPointerLock();}catch(err){}}
+  ['nightLogPanel','controlsPanel','commandPanel'].forEach(function(id){var panel=document.getElementById(id);if(panel)panel.hidden=true;});
+  if(typeof LH_FIELD_STATE!=='undefined'){LH_FIELD_STATE.paused=false;LH_FIELD_STATE.journalOpen=false;}
+  if(typeof LH_TRACKER!=='undefined')LH_TRACKER.open=false;
+  G.state='idle';G.ended=true;G.cam=false;G.freeMode=false;G.freeKeys={};G.manualScare=null;
+  if(typeof setHum==='function')setHum(false);
+  bestText();
+  show('menu');
+},true);
 function bestText(){
   var n=savedNight(),done=n>NIGHTS,sb=$('#startBtn');
   $('#bestLine').textContent=done?('All '+NIGHTS+' nights survived'):('Night '+n+' of '+NIGHTS+(n>1?'  //  '+(n-1)+' survived':''));
