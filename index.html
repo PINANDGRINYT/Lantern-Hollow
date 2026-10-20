@@ -1,4 +1,5 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>Lantern Hollow™</title></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+</style><title>Hollow Industries™ presents: Lantern Hollow</title></head><body>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -139,6 +140,34 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
 .controls-row span{color:#c4bba9}
 .controls-note{font-size:11px;color:var(--dim);margin:14px 0 0}
 @media(max-width:600px){.controls-grid{grid-template-columns:1fr}.controls-row{grid-template-columns:105px 1fr}#controlsPanel{padding:8px}.controls-card{max-height:94vh}}
+/* Functional Night Watchman's Logbook */
+#nightLogPanel[hidden]{display:none!important}
+#nightLogPanel{position:fixed;inset:0;z-index:10002;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(0,0,0,.86);backdrop-filter:blur(7px)}
+.nightlog-card{width:min(1000px,100%);max-height:min(92vh,1000px);overflow:hidden;display:flex;flex-direction:column;border:1px solid #8e6836;background:linear-gradient(145deg,#211b19,#0b0b0d 72%);box-shadow:0 24px 100px #000;color:var(--paper)}
+.nightlog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:20px 22px 14px;border-bottom:1px solid #493a2b;background:linear-gradient(90deg,rgba(240,167,60,.08),transparent 75%)}
+.nightlog-eyebrow{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--amber);margin:0 0 6px!important}
+.nightlog-head h2{font-family:var(--display);font-size:clamp(24px,4vw,34px);margin:0 0 5px}
+.nightlog-summary{font-size:11px;color:var(--dim);margin:0!important;overflow-wrap:anywhere}
+.nightlog-head-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.nightlog-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:12px 18px;background:rgba(255,255,255,.018);border-bottom:1px solid #2c2725}
+.nightlog-stat{min-width:0;padding:9px 11px;background:rgba(0,0,0,.28);border:1px solid #302923}
+.nightlog-stat-label{display:block;color:#928777;font-size:9px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.nightlog-stat-value{display:block;color:#eadbc0;font-size:12px;font-weight:600;overflow-wrap:anywhere}
+.nightlog-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 18px;border-bottom:1px solid #302923}
+.nightlog-filters,.nightlog-actions{display:flex;gap:6px;flex-wrap:wrap}
+.nightlog-toolbar .btn{min-height:34px;padding:7px 10px;font-size:10px}
+.nightlog-entries{padding:12px 18px 18px;overflow:auto;min-height:180px;overscroll-behavior:contain}
+.nightlog-entry{position:relative;display:grid;grid-template-columns:80px minmax(0,1fr);gap:12px;padding:12px 12px 12px 14px;border:1px solid #302923;border-left:3px solid #79613d;background:rgba(255,255,255,.022);margin-bottom:8px}
+.nightlog-entry.log-threat{border-left-color:#b94b3c}.nightlog-entry.log-warning{border-left-color:#e4a849}.nightlog-entry.log-positive{border-left-color:#8aa876}
+.nightlog-time{color:#d0a45f;font:600 11px monospace;line-height:1.6;white-space:nowrap}
+.nightlog-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
+.nightlog-type{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:#a89c87}
+.nightlog-location{font-size:9px;color:#77766d}
+.nightlog-message{font-size:12px;color:#e4dccd;overflow-wrap:anywhere}
+.nightlog-empty{padding:36px 18px;text-align:center;color:#968d7e;border:1px dashed #473c30;background:rgba(0,0,0,.15)}
+.nightlog-foot{padding:9px 18px;color:#777164;font-size:10px;border-top:1px solid #302923;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.log-open-btn{font-size:10px;padding:8px 10px;min-height:38px}
+@media(max-width:620px){#nightLogPanel{padding:6px}.nightlog-card{max-height:96vh}.nightlog-head{padding:14px}.nightlog-stats{grid-template-columns:repeat(2,minmax(0,1fr));padding:9px}.nightlog-toolbar{padding:9px}.nightlog-entries{padding:9px}.nightlog-entry{grid-template-columns:63px minmax(0,1fr);gap:8px;padding:10px}.nightlog-time{font-size:10px}.nightlog-head-actions .btn{padding:7px 8px;min-height:32px}}
 </style>
 
 <main class="wrap">
@@ -147,7 +176,7 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
       <div class="studio-brand">Hollow Industries<sup class="studio-tm-mark" aria-label="trademark claim">™</sup></div>
       <h1>Lantern Hollow<sup class="tm-mark" aria-label="trademark">™</sup></h1>
     </div>
-    <span class="sub">Night watchman's log</span>
+    <button class="btn log-open-btn" type="button" id="openNightLog">Night Watchman's Log</button>
   </header>
 
   <section class="panel" id="menu">
@@ -182,7 +211,7 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;gap:12px">
-    <div class="fsrow"><button class="btn" type="button" data-open-controls>Controls &amp; Help</button><button class="btn" id="fsBtn" type="button">Full screen</button></div>
+    <div class="fsrow"><button class="btn" type="button" id="gameNightLogBtn">Night Watchman's Log</button><button class="btn" type="button" data-open-controls>Controls &amp; Help</button><button class="btn" id="fsBtn" type="button">Full screen</button></div>
     <div class="screen" role="img" aria-label="Lantern Hollow trademark surveillance game display"><canvas id="c" width="960" height="540" aria-label="Game screen"></canvas></div>
     <div class="bar camsel" id="camBar" hidden>
       <button class="btn" data-cam="1">Cam 1</button>
@@ -233,10 +262,39 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
       <p class="keys" id="freeHelp" hidden>3D CONTROLS: W/A/S/D move · mouse look · Shift sprint · Shift sprint · N noclip · L flashlight · M map · Ctrl+C console · F exits free mode.</p>
     </section>
   </div>
+  <section id="nightLogPanel" hidden role="dialog" aria-modal="true" aria-labelledby="nightLogTitle">
+    <div class="nightlog-card">
+      <div class="nightlog-head">
+        <div>
+          <p class="nightlog-eyebrow">Hollow Industries™ // Shift Records</p>
+          <h2 id="nightLogTitle">Night Watchman's Log</h2>
+          <p class="nightlog-summary" id="nightLogSummary">No shift recorded yet. Start a night to begin the log.</p>
+        </div>
+        <div class="nightlog-head-actions">
+          <button class="btn" id="exportNightLog" type="button">Export .txt</button>
+          <button class="btn primary" id="closeNightLog" type="button">Close ✕</button>
+        </div>
+      </div>
+      <div class="nightlog-stats" id="nightLogStats" aria-live="polite"></div>
+      <div class="nightlog-toolbar">
+        <div class="nightlog-filters" aria-label="Filter log entries">
+          <button class="btn primary" type="button" data-log-filter="all">All entries</button>
+          <button class="btn" type="button" data-log-filter="night">Night shift</button>
+          <button class="btn" type="button" data-log-filter="free">Free Mode</button>
+          <button class="btn" type="button" data-log-filter="threats">Threats &amp; alerts</button>
+        </div>
+        <div class="nightlog-actions">
+          <button class="btn" id="clearNightLog" type="button">Clear log</button>
+        </div>
+      </div>
+      <div class="nightlog-entries" id="nightLogEntries" role="log" aria-live="polite" aria-relevant="additions text"></div>
+      <div class="nightlog-foot"><span>Records save in this browser on this device.</span><span id="nightLogCount">0 entries</span></div>
+    </div>
+  </section>
   <section id="controlsPanel" hidden role="dialog" aria-modal="true" aria-labelledby="controlsTitle">
     <div class="controls-card">
       <div class="controls-title"><h2 id="controlsTitle">Survivor's Control Manual</h2><button class="btn primary" id="closeControls" type="button" aria-label="Close controls">Close ✕</button></div>
-      <p class="controls-note">All controls at a glance. Some keys only work in the mode listed. You can open this panel anytime with <kbd>F1</kbd> or the Controls &amp; Help button.</p>
+      <p class="controls-note">All controls at a glance. Some keys only work in the mode listed. You can open this panel anytime with <kbd>F1</kbd> or the Controls &amp; Help button. Press <kbd>K</kbd> to open the Night Watchman's Log.</p>
       <div class="controls-grid">
         <section class="controls-group"><h3>Night survival</h3>
           <div class="controls-row"><kbd>A</kbd><span>Toggle west door</span></div>
@@ -265,6 +323,7 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
           <div class="controls-row"><kbd>T</kbd><span>Open or close the monster threat tracker</span></div>
           <div class="controls-row"><kbd>Esc</kbd><span>Close the journal or exit pseudo-fullscreen where supported</span></div>
           <div class="controls-row"><kbd>F1</kbd><span>Show or hide this controls panel</span></div>
+          <div class="controls-row"><kbd>K</kbd><span>Open or close the Night Watchman's Log</span></div>
         </section>
         <section class="controls-group"><h3>Command console</h3>
           <div class="controls-row"><kbd>Ctrl + C</kbd><span>Show or hide the command console during the game</span></div>
@@ -438,8 +497,11 @@ function stepChar(c,dt){
   if(c.id==='hob'&&G.cam&&camRoom()===c.room)return;
   var nx=nextRoom(c);
   if(!nx)return;
+  var oldRoom=c.room;
   c.room=nx;
+  if(typeof lhAddLog==='function')lhAddLog('MONSTER MOVEMENT',c.name+' moved from '+(CAMNAME[oldRoom]||oldRoom)+' to '+(CAMNAME[nx]||nx)+'.',c.id==='lamp'?'threat':'');
   if(nx==='DL'||nx==='DR'){
+    if(typeof lhAddLog==='function')lhAddLog('DOOR KNOCK',c.name+' is at the '+(nx==='DL'?'west':'east')+' door.', 'threat');
     c.doorT=Math.max(1.2,4.6-.2*G.night)+rand(0,1.6);
     sKnock();
   }else{
@@ -448,6 +510,7 @@ function stepChar(c,dt){
 }
 
 function blackout(){
+  if(typeof lhAddLog==='function')lhAddLog('POWER FAILURE','The building has lost all power. The office doors and cameras are offline.','threat');
   G.powerOut=true;G.power=0;G.doors={L:false,R:false};G.lights={L:false,R:false};G.cam=false;
   G.outT=rand(9,14);G.boxT=1.5;sOut();setHum(false);syncUI();
 }
@@ -476,6 +539,7 @@ function update(dt){
 
 function doScare(c){
   if(G.state!=='play')return;
+  if(typeof lhAddLog==='function')lhAddLog('ATTACK',c.name+' reached you. Shift terminated.','threat');
   G.state='scare';G.scare={c:c,t:0};G.cam=false;G.lights={L:false,R:false};
   setHum(false);syncUI();sScare();
 }
@@ -484,6 +548,7 @@ function updateScare(dt){
   if(G.scare.t>1.7&&!G.ended){G.ended=true;G.state='over';showEnd(false);}
 }
 function winGame(){
+  if(typeof lhAddLog==='function')lhAddLog('SHIFT SURVIVED','6 AM reached. Night '+G.night+' completed successfully.','positive');
   G.state='won';sChime();setHum(false);
   if(savedNight()<=G.night)saveNight(G.night+1);
   setTimeout(function(){showEnd(true);},1800);
@@ -523,6 +588,8 @@ function bestText(){
 function startNight(n){
   initAudio();
   newGame(n);G.state='play';G.card=2.8;
+  if(typeof LH_NIGHT_LOG!=='undefined'){LH_NIGHT_LOG.powerWarnings=Object.create(null);LH_NIGHT_LOG.lastFreeRoom='';}
+  if(typeof lhAddLog==='function')lhAddLog('SHIFT STARTED','Night '+n+' has begun. The watch is underway.','positive');
   show('game');syncUI();
 }
 function showEnd(win){
@@ -569,21 +636,23 @@ function act(a){
   if(!G||G.state!=='play'||G.powerOut)return;
   if(a==='cam'){
     G.cam=!G.cam;G.glitch=.25;
+    if(typeof lhAddLog==='function')lhAddLog('SECURITY MONITOR',G.cam?'Raised the security monitor.':'Lowered the security monitor.');
     if(G.cam){G.lights={L:false,R:false};}
     tone(300,.12,'triangle',.08,G.cam?600:200);setHum(false);
   }else{
     if(G.cam)return;
-    if(a==='doorL'){G.doors.L=!G.doors.L;sDoor();}
-    if(a==='doorR'){G.doors.R=!G.doors.R;sDoor();}
-    if(a==='lightL'){G.lights.L=!G.lights.L;if(G.lights.L)G.lights.R=false;sClick();}
-    if(a==='lightR'){G.lights.R=!G.lights.R;if(G.lights.R)G.lights.L=false;sClick();}
+    if(a==='doorL'){G.doors.L=!G.doors.L;sDoor();if(typeof lhAddLog==='function')lhAddLog('WEST DOOR',G.doors.L?'Closed the west door.':'Opened the west door.',G.doors.L?'warning':'');}
+    if(a==='doorR'){G.doors.R=!G.doors.R;sDoor();if(typeof lhAddLog==='function')lhAddLog('EAST DOOR',G.doors.R?'Closed the east door.':'Opened the east door.',G.doors.R?'warning':'');}
+    if(a==='lightL'){G.lights.L=!G.lights.L;if(G.lights.L)G.lights.R=false;sClick();if(typeof lhAddLog==='function')lhAddLog('WEST LIGHT',G.lights.L?'Turned on the west light.':'Turned off the west light.');}
+    if(a==='lightR'){G.lights.R=!G.lights.R;if(G.lights.R)G.lights.L=false;sClick();if(typeof lhAddLog==='function')lhAddLog('EAST LIGHT',G.lights.R?'Turned on the east light.':'Turned off the east light.');}
     setHum(G.lights.L||G.lights.R);
   }
   syncUI();
 }
 function pickCam(n){
   if(!G||G.state!=='play'||!G.cam)return;
-  G.camSel=n;G.glitch=.2;sClick();syncUI();
+  var previous=G.camSel;G.camSel=n;G.glitch=.2;sClick();syncUI();
+  if(previous!==n&&typeof lhAddLog==='function'){var visible=G.chars.filter(function(c){return c.room===camRoom();}).map(function(c){return c.name;});lhAddLog('CAMERA CHANGED','Switched to Cam '+n+' — '+(CAMNAME[camRoom()]||camRoom())+(visible.length?'. Possible sighting: '+visible.join(', ')+'.':'. Feed selected; no hostiles currently visible.'),visible.length?'warning':'');}
 }
 
 /* ---------- command console and first-person 3D sandbox ---------- */
@@ -625,18 +694,18 @@ function commandMsg(msg){var el=$('#commandStatus');if(el)el.textContent=msg;}
 function getMonster(id){return G&&G.chars.find(function(c){return c.id===id;});}
 function spawnMonster(id){
  if(!G)return;var c=getMonster(id);if(c){commandMsg(c.name+' is already in the building.');return;}
- var d=monsterDefs[id];if(!d)return;c={id:id,name:d.name,idx:d.idx,room:d.room,lvl:0,timer:999999,doorT:0};G.chars.push(c);commandMsg(d.name+' spawned in '+(CAMNAME[c.room]||c.room)+'.');sThud();syncUI();
+ var d=monsterDefs[id];if(!d)return;c={id:id,name:d.name,idx:d.idx,room:d.room,lvl:0,timer:999999,doorT:0};G.chars.push(c);commandMsg(d.name+' spawned in '+(CAMNAME[c.room]||c.room)+'.');if(typeof lhAddLog==='function')lhAddLog('COMMAND CONSOLE',d.name+' spawned in '+(CAMNAME[c.room]||c.room)+'.','warning');sThud();syncUI();
 }
-function removeMonster(id){if(!G)return;var c=getMonster(id);if(!c){commandMsg((monsterDefs[id]||{name:id}).name+' is not active.');return;}G.chars=G.chars.filter(function(x){return x.id!==id;});commandMsg(c.name+' removed from the world.');sClick();syncUI();}
-function enterFreeMode(on){if(!G)return;G.freeMode=!!on;G.cam=false;G.manualScare=null;G.freeKeys={};if(on){G.powerOut=false;G.power=Math.max(100,G.power);G.player=FREE_START();G.chars.forEach(function(c){c.timer=999999;});commandMsg('3D Free Mode active — explore freely. Monsters are frozen until you command them.');}else{commandMsg('Free mode disabled. Night survival resumed.');G.t=Math.min(G.t,HOUR*5.95);}syncUI();}
+function removeMonster(id){if(!G)return;var c=getMonster(id);if(!c){commandMsg((monsterDefs[id]||{name:id}).name+' is not active.');return;}G.chars=G.chars.filter(function(x){return x.id!==id;});commandMsg(c.name+' removed from the world.');if(typeof lhAddLog==='function')lhAddLog('COMMAND CONSOLE',c.name+' removed from the building.');sClick();syncUI();}
+function enterFreeMode(on){if(!G)return;G.freeMode=!!on;G.cam=false;G.manualScare=null;G.freeKeys={};if(on){G.powerOut=false;G.power=Math.max(100,G.power);G.player=FREE_START();G.chars.forEach(function(c){c.timer=999999;});commandMsg('3D Free Mode active — explore freely. Monsters are frozen until you command them.');if(typeof lhAddLog==='function')lhAddLog('FREE MODE','Entered first-person exploration.','positive');if(typeof LH_NIGHT_LOG!=='undefined')LH_NIGHT_LOG.lastFreeRoom='';}else{commandMsg('Free mode disabled. Night survival resumed.');if(typeof lhAddLog==='function')lhAddLog('FREE MODE','Exited first-person exploration.');G.t=Math.min(G.t,HOUR*5.95);}syncUI();}
 function triggerCommandScare(){if(!G)return;var id=$('#scarePick').value;if(id==='selected')id=$('#monsterPick').value;var c=id==='lamp'?{id:'lamp',name:'The Lamplighter'}:getMonster(id);if(!c){spawnMonster(id);c=getMonster(id);}if(!c)return;if(G.state!=='play'&&!G.freeMode){commandMsg('Start a night or enter Free Mode to preview a jumpscare.');return;}/* Command-panel scares are visual previews only: never call doScare(), which ends the night. */G.manualScare={c:c,t:0};sScare();commandMsg('SAFE JUMPSCARE PREVIEW: '+c.name+' — you cannot die from a command-panel scare.');}
 $('#freeToggle').addEventListener('click',function(){enterFreeMode(!G.freeMode);});
 function toggleCommandPanel(force){var panel=$('#commandPanel');if(!panel||!G||$('#game').hidden)return;panel.hidden=typeof force==='boolean'?!force:!panel.hidden;if(!panel.hidden){commandMsg('Command Console open. Ctrl+C hides it.');}else{commandMsg('Command Console hidden. Press Ctrl+C to reopen it.');}if(document.pointerLockElement===cv&&document.exitPointerLock)document.exitPointerLock();}
 window.addEventListener('keydown',function(e){if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key.toLowerCase()==='c'&&G&&!$('#game').hidden){e.preventDefault();toggleCommandPanel();return;}});
-$('#teleportFree').addEventListener('click',function(){if(!G)return;if(!G.freeMode)enterFreeMode(true);var key=$('#teleportRoom').value,rp=roomPos[key]||roomPos.LOBBY;G.player.x=rp[0];G.player.y=rp[1];G.player.a=bestAngle(rp[0],rp[1]);G.freeKeys={};commandMsg('Teleported to '+((roomThemes[key]||{}).name||key)+'.');});
+$('#teleportFree').addEventListener('click',function(){if(!G)return;if(!G.freeMode)enterFreeMode(true);var key=$('#teleportRoom').value,rp=roomPos[key]||roomPos.LOBBY;G.player.x=rp[0];G.player.y=rp[1];G.player.a=bestAngle(rp[0],rp[1]);G.freeKeys={};commandMsg('Teleported to '+((roomThemes[key]||{}).name||key)+'.');if(typeof lhAddLog==='function')lhAddLog('LOCATION OVERRIDE','Teleported to '+((roomThemes[key]||{}).name||key)+'.','warning');if(typeof LH_NIGHT_LOG!=='undefined')LH_NIGHT_LOG.lastFreeRoom=key;});
 $('#noclipToggle').addEventListener('click',function(){if(!G)return;G.freeNoClip=!G.freeNoClip;this.textContent='Noclip: '+(G.freeNoClip?'ON':'OFF');this.setAttribute('aria-pressed',String(G.freeNoClip));commandMsg('Noclip '+(G.freeNoClip?'enabled — walls no longer block you.':'disabled — walls block movement.'));});
 $('#flashlightToggle').addEventListener('click',function(){if(!G)return;G.freeFlashlight=!G.freeFlashlight;this.textContent='Flashlight: '+(G.freeFlashlight?'ON':'OFF');this.setAttribute('aria-pressed',String(G.freeFlashlight));commandMsg('Flashlight '+(G.freeFlashlight?'on.':'off.'));});
-$('#monsterAiToggle').addEventListener('click',function(){if(!G)return;G.freeMonsterAI=!G.freeMonsterAI;this.textContent='Monster AI: '+(G.freeMonsterAI?'ACTIVE':'FROZEN');this.setAttribute('aria-pressed',String(G.freeMonsterAI));commandMsg('Free Mode monster AI '+(G.freeMonsterAI?'activated. Monsters will approach you.':'frozen.'));});
+$('#monsterAiToggle').addEventListener('click',function(){if(!G)return;G.freeMonsterAI=!G.freeMonsterAI;this.textContent='Monster AI: '+(G.freeMonsterAI?'ACTIVE':'FROZEN');this.setAttribute('aria-pressed',String(G.freeMonsterAI));commandMsg('Free Mode monster AI '+(G.freeMonsterAI?'activated. Monsters will approach you.':'frozen.'));if(typeof lhAddLog==='function')lhAddLog('MONSTER AI','Free Mode monster AI '+(G.freeMonsterAI?'activated. Monsters will pursue the player.':'frozen.'),G.freeMonsterAI?'warning':'');});
 $('#placeMonster').addEventListener('click',function(){if(!G)return;if(!G.freeMode)enterFreeMode(true);var id=$('#monsterPick').value,c=getMonster(id);if(!c){spawnMonster(id);c=getMonster(id);}if(c){c.freePos=findOpen(G.player.x+Math.cos(G.player.a)*1.4,G.player.y+Math.sin(G.player.a)*1.4,G.player);c.wp=null;c.room=roomAt(c.freePos.x,c.freePos.y);commandMsg(c.name+' placed nearby.');}});
 $('#spawnMonster').addEventListener('click',function(){spawnMonster($('#monsterPick').value);});
 $('#removeMonster').addEventListener('click',function(){removeMonster($('#monsterPick').value);});
@@ -2058,6 +2127,96 @@ window.addEventListener('keydown',function(e){
 /* end of field investigation expansion */
 
 
+
+/* ================================================================
+   NIGHT WATCHMAN'S LOG — persistent, playable-shift event journal
+   ================================================================ */
+var LH_NIGHT_LOG={entries:[],filter:'all',powerWarnings:Object.create(null),lastFreeRoom:'',seq:1};
+var LH_NIGHT_LOG_KEY='lanternHollowWatchLogV1';
+function lhLoadNightLog(){
+ try{var saved=JSON.parse(localStorage.getItem(LH_NIGHT_LOG_KEY)||'null');if(saved&&Array.isArray(saved.entries)){LH_NIGHT_LOG.entries=saved.entries.filter(function(e){return e&&typeof e.message==='string';}).slice(0,180);LH_NIGHT_LOG.seq=Number(saved.seq)||LH_NIGHT_LOG.entries.length+1;}}catch(e){LH_NIGHT_LOG.entries=[];}
+}
+function lhPersistNightLog(){try{localStorage.setItem(LH_NIGHT_LOG_KEY,JSON.stringify({entries:LH_NIGHT_LOG.entries,seq:LH_NIGHT_LOG.seq}));}catch(e){/* Storage can be blocked; in-memory log remains usable. */}}
+function lhLogGameTime(){
+ if(!G)return 'PRE-SHIFT';
+ if(G.freeMode)return 'FREE ROAM';
+ return HOURS[Math.min(6,Math.max(0,Math.floor((G.t||0)/HOUR)))]||'12 AM';
+}
+function lhLogLocation(){
+ if(!G)return 'MAIN MENU';
+ if(G.freeMode){var r=lhCurrentRoom();return ((roomThemes[r]||{}).name||CAMNAME[r]||r);}
+ if(G.cam&&!G.powerOut)return 'CAM '+String(G.camSel).padStart(2,'0')+' / '+(CAMNAME[camRoom()]||camRoom());
+ return 'SECURITY OFFICE';
+}
+function lhAddLog(type,message,toneTag){
+ if(!LH_NIGHT_LOG||typeof message!=='string')return;
+ var stamp=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+ var item={id:LH_NIGHT_LOG.seq++,stamp:stamp,night:G&&Number.isFinite(G.night)?G.night:null,gameTime:lhLogGameTime(),mode:G?(G.freeMode?'FREE MODE':'NIGHT SHIFT'):'MENU',location:lhLogLocation(),type:String(type||'NOTE'),message:message,kind:toneTag||''};
+ LH_NIGHT_LOG.entries.unshift(item);if(LH_NIGHT_LOG.entries.length>180)LH_NIGHT_LOG.entries.length=180;
+ lhPersistNightLog();
+ if(!document.getElementById('nightLogPanel').hidden)lhRenderNightLog();
+}
+function lhLogIsThreat(e){return /THREAT|ALERT|POWER|ATTACK|KNOCK|MONSTER|PARANORMAL|BLACKOUT|DANGER|FAILURE/i.test(e.type+' '+e.message);}
+function lhRenderNightLog(){
+ var panel=document.getElementById('nightLogPanel');if(!panel)return;
+ var summary=document.getElementById('nightLogSummary'),stats=document.getElementById('nightLogStats'),list=document.getElementById('nightLogEntries'),count=document.getElementById('nightLogCount');
+ if(G&&G.state!=='idle'&&!document.getElementById('menu').hidden){summary.textContent='CURRENT RECORD  //  NIGHT '+G.night+' OF '+NIGHTS+'  //  '+lhLogGameTime()+'  //  '+(G.freeMode?'FREE MODE':'NIGHT SHIFT');}
+ else if(G&&G.state!=='idle'&&document.getElementById('menu').hidden){summary.textContent='CURRENT RECORD  //  NIGHT '+G.night+' OF '+NIGHTS+'  //  '+lhLogGameTime()+'  //  '+(G.freeMode?'FREE MODE':'NIGHT SHIFT');}
+ else{summary.textContent=LH_NIGHT_LOG.entries.length?'Stored record from your previous shift. Start a night to begin a new entry.':'No shift recorded yet. Start a night to begin the log.';}
+ while(stats.firstChild)stats.removeChild(stats.firstChild);
+ var statData=G?[['NIGHT',''+G.night+' / '+NIGHTS],['IN-GAME TIME',lhLogGameTime()],['POWER',G.freeMode?'SANDBOX':Math.max(0,Math.ceil(G.power))+'%'],['LOCATION',lhLogLocation()]]:[['LAST NIGHT',LH_NIGHT_LOG.entries.length&&LH_NIGHT_LOG.entries[0].night?'Night '+LH_NIGHT_LOG.entries[0].night:'—'],['MODE',LH_NIGHT_LOG.entries.length?LH_NIGHT_LOG.entries[0].mode:'—'],['LATEST TIME',LH_NIGHT_LOG.entries.length?LH_NIGHT_LOG.entries[0].stamp:'—'],['RECORDS',String(LH_NIGHT_LOG.entries.length)]];
+ statData.forEach(function(d){var card=document.createElement('div');card.className='nightlog-stat';var label=document.createElement('span');label.className='nightlog-stat-label';label.textContent=d[0];var value=document.createElement('span');value.className='nightlog-stat-value';value.textContent=d[1];card.appendChild(label);card.appendChild(value);stats.appendChild(card);});
+ var filter=LH_NIGHT_LOG.filter||'all';
+ document.querySelectorAll('[data-log-filter]').forEach(function(b){var active=b.getAttribute('data-log-filter')===filter;b.classList.toggle('primary',active);b.setAttribute('aria-pressed',String(active));});
+ var entries=LH_NIGHT_LOG.entries.filter(function(e){if(filter==='night')return e.mode==='NIGHT SHIFT';if(filter==='free')return e.mode==='FREE MODE';if(filter==='threats')return lhLogIsThreat(e);return true;});
+ while(list.firstChild)list.removeChild(list.firstChild);
+ if(!entries.length){var empty=document.createElement('div');empty.className='nightlog-empty';empty.textContent=LH_NIGHT_LOG.entries.length?'No entries match this filter.':'THE LOG IS EMPTY. Start a night or explore Free Mode to create records.';list.appendChild(empty);}
+ entries.forEach(function(e){
+  var article=document.createElement('article');article.className='nightlog-entry'+(e.kind==='threat'||lhLogIsThreat(e)?' log-threat':e.kind==='warning'?' log-warning':e.kind==='positive'?' log-positive':'');
+  var time=document.createElement('div');time.className='nightlog-time';time.textContent=(e.stamp||'--:--')+'\n'+(e.gameTime||'');
+  var body=document.createElement('div');var meta=document.createElement('div');meta.className='nightlog-meta';
+  var type=document.createElement('span');type.className='nightlog-type';type.textContent=e.type||'NOTE';
+  var where=document.createElement('span');where.className='nightlog-location';where.textContent='NIGHT '+(e.night||'—')+'  /  '+(e.location||'UNKNOWN')+'  /  '+(e.mode||'UNKNOWN');
+  var message=document.createElement('div');message.className='nightlog-message';message.textContent=e.message||'';
+  meta.appendChild(type);meta.appendChild(where);body.appendChild(meta);body.appendChild(message);article.appendChild(time);article.appendChild(body);list.appendChild(article);
+ });
+ count.textContent=entries.length+' entr'+(entries.length===1?'y':'ies')+(filter==='all'?'':' shown');
+}
+function lhToggleNightLog(force){
+ var panel=document.getElementById('nightLogPanel');if(!panel)return;
+ var show=typeof force==='boolean'?force:panel.hidden;
+ if(show){
+  lhToggleControls(false);
+  if(typeof LH_FIELD_STATE!=='undefined')LH_FIELD_STATE.journalOpen=false;
+  if(typeof LH_TRACKER!=='undefined')LH_TRACKER.open=false;
+  if(document.pointerLockElement===cv&&document.exitPointerLock)document.exitPointerLock();
+  panel.hidden=false;lhRenderNightLog();document.getElementById('closeNightLog').focus();
+ }else panel.hidden=true;
+}
+function lhUpdateNightLogMonitoring(){
+ if(!G)return;
+ if(G.freeMode){var r=lhCurrentRoom();if(LH_NIGHT_LOG.lastFreeRoom!==r){if(LH_NIGHT_LOG.lastFreeRoom)lhAddLog('ROOM ENTERED','Entered '+((roomThemes[r]||{}).name||r)+'.');LH_NIGHT_LOG.lastFreeRoom=r;}}
+ if(!G.freeMode&&G.state==='play'&&!G.powerOut){[50,25,10].forEach(function(threshold){if(G.power<=threshold&&!LH_NIGHT_LOG.powerWarnings[threshold]){LH_NIGHT_LOG.powerWarnings[threshold]=true;lhAddLog('POWER WARNING','Power has fallen to '+Math.max(0,Math.ceil(G.power))+'%. '+(threshold<=10?'Critical reserve.':'Conserve doors, lights, and monitor usage.'),'warning');}});}
+}
+lhLoadNightLog();
+document.getElementById('openNightLog').addEventListener('click',function(){lhToggleNightLog(true);});
+document.getElementById('gameNightLogBtn').addEventListener('click',function(){lhToggleNightLog(true);});
+document.getElementById('closeNightLog').addEventListener('click',function(){lhToggleNightLog(false);});
+document.getElementById('nightLogPanel').addEventListener('click',function(e){if(e.target===this)lhToggleNightLog(false);});
+document.querySelectorAll('[data-log-filter]').forEach(function(b){b.addEventListener('click',function(){LH_NIGHT_LOG.filter=this.getAttribute('data-log-filter');lhRenderNightLog();});});
+document.getElementById('exportNightLog').addEventListener('click',function(){
+ var lines=['LANTERN HOLLOW™ — NIGHT WATCHMAN\'S LOG','HOLLOW INDUSTRIES™','Exported: '+new Date().toLocaleString(),''];
+ LH_NIGHT_LOG.entries.slice().reverse().forEach(function(e){lines.push('['+(e.stamp||'--:--')+' | '+(e.gameTime||'')+' | Night '+(e.night||'—')+' | '+(e.location||'')+' | '+(e.mode||'')+'] '+(e.type||'NOTE')+' — '+(e.message||''));});
+ var blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Lantern_Hollow_Night_Watchmans_Log.txt';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},1000);
+});
+document.getElementById('clearNightLog').addEventListener('click',function(){if(!window.confirm('Clear all saved Night Watchman\'s Log entries from this browser?'))return;LH_NIGHT_LOG.entries=[];LH_NIGHT_LOG.seq=1;lhPersistNightLog();lhRenderNightLog();});
+window.addEventListener('keydown',function(e){
+ if(e.ctrlKey||e.metaKey||e.altKey)return;
+ if(e.key.toLowerCase()==='k'&&!(e.target&&/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))){e.preventDefault();lhToggleNightLog();e.stopImmediatePropagation();return;}
+ if(e.key==='Escape'){var panel=document.getElementById('nightLogPanel');if(panel&&!panel.hidden){lhToggleNightLog(false);e.stopImmediatePropagation();}}
+});
+
+
 /* Threat tracker / field intelligence display. */
 var LH_TRACKER={open:false,lastSeen:Object.create(null),pulse:0};
 function lhThreatLabel(c,p){
@@ -2133,6 +2292,7 @@ function lhAmbientTick(dt){
  LH_AMBIENCE.nextAt=18+Math.random()*24;
  var room=lhCurrentRoom(),events=LH_ROOM_EVENTS[room]||LH_ROOM_EVENTS.HALL;
  LH_AMBIENCE.message=events[Math.floor(Math.random()*events.length)];
+ if(typeof lhAddLog==='function')lhAddLog('PARANORMAL EVENT',((roomThemes[room]||{}).name||room)+': '+LH_AMBIENCE.message,'warning');
  LH_AMBIENCE.until=G.freeT+4.5;
  if(Math.random()<.35&&typeof tone==='function')tone(90+Math.random()*80,.22,'sine',.035,45);
 }
@@ -2168,12 +2328,14 @@ function render(){
 var last=0;
 function loop(ts){
   var dt=Math.min(.05,((ts-last)/1000)||0);last=ts;
+  var logPanel=document.getElementById('nightLogPanel'),nightLogOpen=!!(logPanel&&!logPanel.hidden);
   if(G){
-    if(G.state==='play'&&!(G.freeMode&&(LH_FIELD_STATE.paused||LH_FIELD_STATE.journalOpen)))update(dt);
-    if(G&&G.freeMode&&!LH_FIELD_STATE.paused&&!LH_FIELD_STATE.journalOpen)lhTickFieldSystems();
-    if(G&&G.freeMode&&!LH_FIELD_STATE.paused&&!LH_FIELD_STATE.journalOpen)lhUpdateTracker();
-    if(G&&G.freeMode&&!LH_FIELD_STATE.paused&&!LH_FIELD_STATE.journalOpen)lhAmbientTick(dt);
-    else if(G.state==='scare')updateScare(dt);
+    if(!nightLogOpen)lhUpdateNightLogMonitoring();
+    if(!nightLogOpen&&G.state==='play'&&!(G.freeMode&&(LH_FIELD_STATE.paused||LH_FIELD_STATE.journalOpen)))update(dt);
+    if(!nightLogOpen&&G&&G.freeMode&&!LH_FIELD_STATE.paused&&!LH_FIELD_STATE.journalOpen)lhTickFieldSystems();
+    if(!nightLogOpen&&G&&G.freeMode&&!LH_FIELD_STATE.paused&&!LH_FIELD_STATE.journalOpen)lhUpdateTracker();
+    if(!nightLogOpen&&G&&G.freeMode&&!LH_FIELD_STATE.paused&&!LH_FIELD_STATE.journalOpen)lhAmbientTick(dt);
+    else if(!nightLogOpen&&G.state==='scare')updateScare(dt);
   }
   if(G&&!$('#game').hidden)render();
   requestAnimationFrame(loop);
