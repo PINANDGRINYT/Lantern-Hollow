@@ -660,11 +660,34 @@ function drawFree3D(){
  for(var x=0;x<cols;x++){
   var ra=p.a-Math.PI/6+(x/cols)*(Math.PI/3),rx=Math.cos(ra),ry=Math.sin(ra),dist=.05,hit=false,side=0,tx=p.x,ty=p.y;
   while(dist<18&&!hit){tx=p.x+rx*dist;ty=p.y+ry*dist;if(solid(tx,ty)){hit=true;side=(Math.floor(tx)!==Math.floor(tx-rx*.04))?1:0;}else dist+=.035;}
+  /* Curtains are actual raycast panels, not billboard sprites: intersect each ray
+     with the curtain plane and let the nearer surface win over the room wall. */
+  var curtainHit=null;
+  for(var ci=0;ci<roomProps.length;ci++){
+   var co=roomProps[ci];if(co.type!=='curtain')continue;
+   var vertical=false;
+   if(solid(co.x-0.22,co.y)||solid(co.x+0.22,co.y))vertical=true;
+   else if(solid(co.x,co.y-0.22)||solid(co.x,co.y+0.22))vertical=false;
+   else vertical=Math.abs(Math.sin(co.wallAngle||0))<.5;
+   var denom=vertical?rx:ry;if(Math.abs(denom)<.0001)continue;
+   var cd=((vertical?co.x:co.y)-(vertical?p.x:p.y))/denom;
+   if(cd>.08&&cd<dist&&Math.abs((vertical?p.y+ry*cd:p.x+rx*cd)-(vertical?co.y:co.x))<.56){
+    curtainHit={o:co,d:cd,vertical:vertical,along:(vertical?p.y+ry*cd:p.x+rx*cd)-(vertical?co.y:co.x)};dist=cd;tx=p.x+rx*cd;ty=p.y+ry*cd;hit=true;side=vertical?1:0;
+   }
+  }
   var rawDist=dist;dist=Math.max(.05,dist*Math.cos(ra-p.a));depths[x]=dist;rayAngles[x]=ra;
   var wh=Math.min(H*1.8,H*.92/dist),top=horizon-wh/2,wallRoom=roomAt(tx,ty),wt=roomThemes[wallRoom]||theme,shade=clamp(150-dist*8-(side?28:0),16,125);
   var pulse=(wallRoom==='GENERATOR'&&Math.floor(frame/8+x/12)%11===0)?20:0;
   var rr=clamp(wt.wall[0]*shade/100+pulse,8,180),gg=clamp(wt.wall[1]*shade/100,8,170),bb=clamp(wt.wall[2]*shade/100,8,170);
   ctx.fillStyle='rgb('+Math.floor(rr)+','+Math.floor(gg)+','+Math.floor(bb)+')';ctx.fillRect(x*strip,top,strip+1,wh);
+  if(curtainHit&&Math.abs(curtainHit.d-rawDist)<.05){
+   var u=clamp((curtainHit.along+.56)/1.12,0,.999),fold=Math.abs((u*9)%1-.5),foldShade=.62+.38*(1-fold*1.8);
+   ctx.fillStyle='rgba(30,5,13,.96)';ctx.fillRect(x*strip,top,strip+1,wh);
+   ctx.fillStyle='rgb('+Math.floor(92*foldShade)+','+Math.floor(18*foldShade)+','+Math.floor(32*foldShade)+')';ctx.fillRect(x*strip,top,strip+1,wh);
+   if(u<.08||u>.92){ctx.fillStyle='rgba(22,5,10,.95)';ctx.fillRect(x*strip,top,strip+1,wh);}
+   ctx.fillStyle='rgba(190,75,87,'+(.12+.12*foldShade)+')';ctx.fillRect(x*strip,top+wh*.07,strip+1,Math.max(1,wh*.025));
+   ctx.fillStyle='rgba(15,3,8,.6)';ctx.fillRect(x*strip,top+wh*.92,strip+1,Math.max(1,wh*.08));
+  }
   var tile=Math.floor((side?ty:tx)*2.5)%2===0;ctx.fillStyle=tile?'rgba(0,0,0,.16)':'rgba(230,205,164,.035)';ctx.fillRect(x*strip,top,strip+1,wh);
   /* Room-specific wall treatments: stage drapes, lobby trim, archive boards and generator hazard marks. */
   var pattern=Math.floor((side?ty:tx)*3)%7;
@@ -675,23 +698,42 @@ function drawFree3D(){
   if((wallRoom==='BASEMENT'||wallRoom==='TUNNEL')&&pattern===0){ctx.fillStyle='rgba(113,150,162,.45)';ctx.fillRect(x*strip,top+wh*.1,strip+1,Math.max(3,wh*.035));}
   if(wh>20&&Math.floor(x/19)%5===0){ctx.fillStyle='rgba(240,167,60,'+clamp(.05/dist,.005,.04)+')';ctx.fillRect(x*strip,top+wh*.2,strip+1,2);}
  }
- /* Project room props into the 3D view and depth-test them against the walls. */
- var projected=[];roomProps.forEach(function(o){var dx=o.x-p.x,dy=o.y-p.y,d=Math.hypot(dx,dy),ang=Math.atan2(dy,dx)-p.a;while(ang>Math.PI)ang-=Math.PI*2;while(ang<-Math.PI)ang+=Math.PI*2;if(Math.abs(ang)<Math.PI/3&&d>.35){var sx=W/2+Math.tan(ang)*(W*.78),ix=clamp(Math.floor(sx/strip),0,cols-1);if(d<depths[ix]+.15)projected.push({o:o,d:d,sx:sx,ang:ang});}});projected.sort(function(a,b){return b.d-a.d;});
- /* Floor-plane projection keeps furniture planted. Wall pieces are now snapped to real wall edges,
-    so their vertical offset is measured from that wall's floor line rather than open-room space. */
+ /* Every room prop is rasterized to a texture, then drawn column-by-column through
+    the raycaster depth buffer. Walls and nearer objects correctly hide each column. */
+ var propTextureCache=window.__lhPropTextureCache||(window.__lhPropTextureCache={});
+ function propTexture(type,accent){
+  var key=type+'|'+(accent||'');if(propTextureCache[key])return propTextureCache[key];
+  var tex=document.createElement('canvas');tex.width=128;tex.height=128;var oldCtx=ctx;ctx=tex.getContext('2d');
+  drawRoomProp(type,64,112,1,accent);ctx=oldCtx;propTextureCache[key]=tex;return tex;
+ }
+ function drawRaySprite(tex,sx,baseY,scale,d,depthTest){
+  var dw=tex.width*scale,dh=tex.height*scale,left=sx-dw/2,top=baseY-tex.height*scale;
+  var x0=clamp(Math.floor(left/strip),0,cols-1),x1=clamp(Math.ceil((left+dw)/strip),0,cols-1);
+  for(var ix=x0;ix<=x1;ix++){
+   if(depthTest&&d>=depths[ix])continue;
+   var screenX=ix*strip+strip*.5;if(screenX<left||screenX>=left+dw)continue;
+   var u=clamp(Math.floor((screenX-left)/dw*tex.width),0,tex.width-1);
+   ctx.drawImage(tex,u,0,1,tex.height,ix*strip,top,strip+1,dh);
+   if(depthTest)depths[ix]=d;
+  }
+ }
+ var projected=[];roomProps.forEach(function(o){if(o.type==='curtain')return;var dx=o.x-p.x,dy=o.y-p.y,d=Math.hypot(dx,dy),ang=Math.atan2(dy,dx)-p.a;while(ang>Math.PI)ang-=Math.PI*2;while(ang<-Math.PI)ang+=Math.PI*2;if(Math.abs(ang)<Math.PI/3&&d>.35){var sx=W/2+Math.tan(ang)*(W*.78);projected.push({o:o,d:d,sx:sx});}});projected.sort(function(a,b){return b.d-a.d;});
  projected.forEach(function(sp){
-  var wallMounted=WALL_PROP_TYPES.indexOf(sp.o.type)>=0;
-  var focal=H*.62,sc=clamp(1.08/sp.d,.045,.92),floorY=horizon+focal/Math.max(.35,sp.d);
-  var sy=wallMounted?floorY-H*.205/Math.max(.35,sp.d):floorY;
-  if(sp.o.type==='curtain')sc=clamp(1.9/sp.d,.08,1.25);
-  if(['shelf','cabinet','engine','desk','couch'].indexOf(sp.o.type)>=0)sc=clamp(1.3/sp.d,.06,1.05);
-  if(sp.o.type==='bookshelf')sc=clamp(2.15/sp.d,.10,1.35);
-  /* Make all free-roam props larger and easier to see, while keeping perspective depth scaling. */
-  sc=Math.min(sc*2.05,2.65);
-  ctx.globalAlpha=clamp(1.35/sp.d,.24,1);drawRoomProp(sp.o.type,sp.sx,sy,sc,(roomThemes[sp.o.room]||theme).accent);ctx.globalAlpha=1;
+  var o=sp.o,wallMounted=WALL_PROP_TYPES.indexOf(o.type)>=0,tex=propTexture(o.type,(roomThemes[o.room]||theme).accent);
+  var sc=H*.62/Math.max(.35,sp.d)/100;
+  if(['shelf','cabinet','engine','desk','couch'].indexOf(o.type)>=0)sc*=1.2;
+  if(o.type==='bookshelf')sc*=1.85;
+  sc=Math.min(sc*1.55,3.3);
+  var baseY=horizon+H*.62/Math.max(.35,sp.d);
+  if(wallMounted)baseY-=H*.205/Math.max(.35,sp.d);
+  ctx.globalAlpha=clamp(1.35/sp.d,.24,1);drawRaySprite(tex,sp.sx,baseY,sc,sp.d,true);ctx.globalAlpha=1;
  });
- var sprites=[];G.chars.forEach(function(c){var rp=c.freePos||roomPos[c.room]||roomPos.HALL;var dx=rp[0]-p.x,dy=rp[1]-p.y,d=Math.hypot(dx,dy),ang=Math.atan2(dy,dx)-p.a;while(ang>Math.PI)ang-=Math.PI*2;while(ang<-Math.PI)ang+=Math.PI*2;if(Math.abs(ang)<.65&&d>.25){var sx=W/2+Math.tan(ang)*(W*.78),ix=clamp(Math.floor(sx/strip),0,cols-1);if(d<depths[ix]+.12)sprites.push({c:c,d:d,ang:ang,sx:sx,ix:ix});}});sprites.sort(function(a,b){return b.d-a.d;});
- sprites.forEach(function(sp){var sc=clamp(1.45/sp.d,.08,1.25),sy=horizon+H*.62/Math.max(.35,sp.d);ctx.save();ctx.translate(sp.sx,sy);ctx.globalAlpha=clamp(1.3/sp.d,.35,1);drawChar(sp.c.id,0,0,sc,.96,1.1);ctx.restore();});
+ /* Monsters use the same per-column ray/depth pipeline, so furniture and walls can
+    hide them instead of letting them paint over the whole scene as flat overlays. */
+ var monsterTextureCache=window.__lhMonsterTextureCache||(window.__lhMonsterTextureCache={});
+ function monsterTexture(id){if(monsterTextureCache[id])return monsterTextureCache[id];var tex=document.createElement('canvas');tex.width=256;tex.height=300;var oldCtx=ctx;ctx=tex.getContext('2d');drawChar(id,128,280,1,.96,1.1);ctx=oldCtx;monsterTextureCache[id]=tex;return tex;}
+ var sprites=[];G.chars.forEach(function(c){var rp=c.freePos||roomPos[c.room]||roomPos.HALL;var dx=rp[0]-p.x,dy=rp[1]-p.y,d=Math.hypot(dx,dy),ang=Math.atan2(dy,dx)-p.a;while(ang>Math.PI)ang-=Math.PI*2;while(ang<-Math.PI)ang+=Math.PI*2;if(Math.abs(ang)<.65&&d>.25){var sx=W/2+Math.tan(ang)*(W*.78);sprites.push({c:c,d:d,sx:sx});}});sprites.sort(function(a,b){return b.d-a.d;});
+ sprites.forEach(function(sp){var sc=H*.62/Math.max(.35,sp.d)/210;sc=Math.min(sc*1.8,2.3);var baseY=horizon+H*.62/Math.max(.35,sp.d);ctx.globalAlpha=clamp(1.3/sp.d,.35,1);drawRaySprite(monsterTexture(sp.c.id),sp.sx,baseY,sc,sp.d,true);ctx.globalAlpha=1;});
  var vg=ctx.createRadialGradient(W/2,H*.5,30,W/2,H*.5,W*.68);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.78)');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
  /* Fine film grain, damp-floor glints and subtle lens grime add depth without external assets. */
  ctx.save();for(var q=0;q<22;q++){var gx=(q*137+Math.sin(q*9.7)*53+frame*.13)%W,gy=(q*71+Math.cos(q*4.2)*19)%H;ctx.fillStyle=q%3===0?'rgba(205,193,158,.10)':'rgba(0,0,0,.13)';ctx.fillRect(gx,gy,1+(q%3),1);}
