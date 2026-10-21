@@ -10,6 +10,20 @@
   .camera-map-panel{width:96%;padding:7px}
   .camera-map-canvas{min-height:245px}
 }
+
+/* Emergency phone overlay */
+#phonePanel[hidden]{display:none!important}
+#phonePanel{position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.86);backdrop-filter:blur(6px)}
+.phone-card{width:min(430px,100%);border:2px solid #4e6d54;border-radius:24px;padding:22px;background:linear-gradient(155deg,#202b24,#090d0b 75%);box-shadow:0 25px 100px #000,0 0 35px rgba(115,185,122,.12);color:#e7f1e3}
+.phone-top{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #405744;padding-bottom:12px}
+.phone-top h2{margin:0;font-size:20px;color:#b6e3a8}
+.phone-screen{margin:18px 0;padding:18px 14px;min-height:132px;border:1px solid #426449;border-radius:12px;background:#08110b;color:#b9f0ad;text-align:center;box-shadow:inset 0 0 22px #000}
+.phone-number{font-size:32px;letter-spacing:.12em;font-weight:600}
+.phone-status{font-size:12px;line-height:1.7;color:#d6e9d1;margin-top:10px}
+.phone-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.phone-actions .call-police{grid-column:1/-1;background:#9f3028;border-color:#d86a5b;color:#fff}
+.phone-disclaimer{font-size:10px;color:#a8b6a4;margin:14px 0 0;text-align:center}
+@media(max-width:500px){.phone-card{padding:16px;border-radius:18px}.phone-number{font-size:28px}}
 </style><title>Hollow Industries™ presents: Lantern Hollow</title></head><body>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -243,7 +257,7 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;gap:12px">
-    <div class="fsrow"><button class="btn" type="button" id="gameNightLogBtn">Night Watchman's Log</button><button class="btn" type="button" data-open-controls>Controls &amp; Help</button><button class="btn" type="button" id="opsDossierBtn">Operations Dossier (F2)</button><button class="btn" type="button" id="opsExportBtn">Export Dossier</button><button class="btn" id="fsBtn" type="button">Full screen</button></div>
+    <div class="fsrow"><button class="btn" type="button" id="gameNightLogBtn">Night Watchman's Log</button><button class="btn" type="button" data-open-controls>Controls &amp; Help</button><button class="btn" type="button" id="opsDossierBtn">Operations Dossier (F2)</button><button class="btn" type="button" id="lhHubOpen">Night Operations Hub (F4)</button><button class="btn" type="button" id="openPhone">☎ Emergency Phone</button><button class="btn" type="button" id="opsExportBtn">Export Dossier</button><button class="btn" id="fsBtn" type="button">Full screen</button></div>
     <div class="screen" role="img" aria-label="Lantern Hollow trademark surveillance game display"><canvas id="c" width="960" height="540" aria-label="Game screen"></canvas></div>
     <div class="bar camsel" id="camBar" hidden>
       <button class="btn" data-cam="1">Cam 1</button>
@@ -391,6 +405,15 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
   </section>
 </main>
 
+
+  <section id="phonePanel" hidden role="dialog" aria-modal="true" aria-labelledby="phoneTitle">
+    <div class="phone-card">
+      <div class="phone-top"><div><p style="margin:0 0 4px;font-size:10px;letter-spacing:.15em;color:#a9c6a6">LANTERN HOLLOW // EMERGENCY LINE</p><h2 id="phoneTitle">Emergency Telephone</h2></div><span aria-hidden="true" style="font-size:30px">☎</span></div>
+      <div class="phone-screen"><div class="phone-number">911</div><div id="phoneStatus" class="phone-status" role="status" aria-live="polite">The receiver is warm. A faint voice crackles on the line.</div></div>
+      <div class="phone-actions"><button class="btn call-police" id="callPolice" type="button">☎ CALL POLICE</button><button class="btn" id="phoneHangup" type="button">Hang up</button><button class="btn" id="phoneClose" type="button">Put phone away</button></div>
+      <p class="phone-disclaimer">IN-GAME SIMULATION ONLY — this button does not contact real emergency services.</p>
+    </div>
+  </section>
 <script>
 (function(){
 'use strict';
@@ -3339,224 +3362,836 @@ requestAnimationFrame(loop);
 })();
 </script>
 
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
-<!-- Hollow Industries feature expansion: additional maintainability and subsystem boundary. -->
+
+
+<!-- HOLLOW INDUSTRIES™: NIGHT OPERATIONS HUB / FIELD INTELLIGENCE EXPANSION -->
+<style>
+#lhOperationsHub {
+  position: fixed;
+  inset: 0;
+  z-index: 10060;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  color: #e8dfc8;
+  background: rgba(3, 5, 6, .93);
+  backdrop-filter: blur(7px);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+#lhOperationsHub[hidden] { display: none !important; }
+#lhOperationsHub * { box-sizing: border-box; }
+#lhOperationsHub .lho-shell {
+  width: min(1080px, 97vw);
+  max-height: 94vh;
+  overflow: auto;
+  border: 1px solid #76613b;
+  background: #0b100e;
+  box-shadow: 0 20px 80px #000, 0 0 25px #bd8d3b18;
+}
+#lhOperationsHub .lho-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid #4a3d29;
+  background: linear-gradient(100deg, #20251f, #111512);
+}
+#lhOperationsHub h2, #lhOperationsHub h3, #lhOperationsHub p { margin-top: 0; }
+#lhOperationsHub h2 {
+  margin-bottom: 5px;
+  color: #f0c77a;
+  font-size: clamp(17px, 3vw, 25px);
+  letter-spacing: .1em;
+}
+#lhOperationsHub .lho-kicker {
+  margin: 0;
+  color: #9fa898;
+  font-size: 10px;
+  letter-spacing: .14em;
+}
+#lhOperationsHub button,
+#lhOperationsHub input,
+#lhOperationsHub select,
+#lhOperationsHub textarea {
+  max-width: 100%;
+  color: inherit;
+  font: inherit;
+}
+#lhOperationsHub button {
+  padding: 8px 11px;
+  border: 1px solid #75603b;
+  background: #1a211b;
+  cursor: pointer;
+}
+#lhOperationsHub button:hover,
+#lhOperationsHub button:focus-visible {
+  border-color: #e5bc70;
+  background: #303323;
+}
+#lhOperationsHub button:focus-visible,
+#lhOperationsHub input:focus-visible,
+#lhOperationsHub select:focus-visible,
+#lhOperationsHub textarea:focus-visible {
+  outline: 2px solid #e8c57d;
+  outline-offset: 2px;
+}
+#lhOperationsHub .lho-close { color: #ffd2bd; border-color: #8c5546; }
+#lhOperationsHub .lho-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 12px 16px 0;
+}
+#lhOperationsHub .lho-tabs button[aria-selected="true"] {
+  color: #fff0c9;
+  background: #5a4828;
+  border-color: #d6b06b;
+}
+#lhOperationsHub .lho-content { padding: 16px; }
+#lhOperationsHub .lho-page[hidden] { display: none !important; }
+#lhOperationsHub .lho-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 14px;
+}
+#lhOperationsHub .lho-stat {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #333b31;
+  background: #111713;
+}
+#lhOperationsHub .lho-stat strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #efc578;
+  font-size: 24px;
+}
+#lhOperationsHub .lho-stat span {
+  color: #9ca596;
+  font-size: 10px;
+  letter-spacing: .08em;
+}
+#lhOperationsHub .lho-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+#lhOperationsHub .lho-card {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #343c32;
+  background: #101612;
+}
+#lhOperationsHub .lho-card h3 {
+  margin-bottom: 7px;
+  color: #e5c27e;
+  font-size: 13px;
+}
+#lhOperationsHub .lho-card p {
+  margin-bottom: 9px;
+  color: #b3b8aa;
+  font-size: 12px;
+  line-height: 1.55;
+}
+#lhOperationsHub .lho-card small { color: #8f998c; }
+#lhOperationsHub .lho-progress {
+  height: 6px;
+  overflow: hidden;
+  margin: 8px 0;
+  border: 1px solid #353d32;
+  background: #070a08;
+}
+#lhOperationsHub .lho-progress span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #d7ad5d;
+  transition: width .2s ease;
+}
+#lhOperationsHub .lho-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+#lhOperationsHub .lho-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+#lhOperationsHub label {
+  display: grid;
+  gap: 5px;
+  color: #c8c2ae;
+  font-size: 11px;
+}
+#lhOperationsHub input,
+#lhOperationsHub select,
+#lhOperationsHub textarea {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid #495346;
+  border-radius: 0;
+  background: #080c0a;
+  color: #f0eadc;
+}
+#lhOperationsHub textarea { min-height: 100px; resize: vertical; }
+#lhOperationsHub .lho-record-list { display: grid; gap: 8px; }
+#lhOperationsHub .lho-record {
+  display: grid;
+  grid-template-columns: minmax(110px, 150px) 1fr auto;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid #30382e;
+  background: #101511;
+}
+#lhOperationsHub .lho-record time { color: #d2b170; font-size: 10px; }
+#lhOperationsHub .lho-record p { margin: 0; overflow-wrap: anywhere; font-size: 12px; line-height: 1.5; }
+#lhOperationsHub .lho-record small { display: block; margin-top: 5px; color: #919b8e; }
+#lhOperationsHub .lho-empty {
+  padding: 25px;
+  border: 1px dashed #424b3e;
+  color: #9ba493;
+  text-align: center;
+}
+#lhOperationsHub .lho-warning { color: #f2ae91; }
+#lhOperationsHub .lho-good { color: #b8d49a; }
+#lhOperationsHub .lho-footer {
+  padding: 11px 16px;
+  border-top: 1px solid #343b30;
+  color: #858f81;
+  font-size: 10px;
+  line-height: 1.5;
+}
+@media (max-width: 680px) {
+  #lhOperationsHub { padding: 5px; }
+  #lhOperationsHub .lho-shell { width: 100%; max-height: 98vh; }
+  #lhOperationsHub .lho-header { align-items: flex-start; padding: 12px; }
+  #lhOperationsHub .lho-content { padding: 10px; }
+  #lhOperationsHub .lho-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #lhOperationsHub .lho-card-grid,
+  #lhOperationsHub .lho-fields { grid-template-columns: 1fr; }
+  #lhOperationsHub .lho-record { grid-template-columns: 1fr; gap: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #lhOperationsHub .lho-progress span { transition: none; }
+}
+</style>
+
+<section id="lhOperationsHub" hidden role="dialog" aria-modal="true" aria-labelledby="lhoTitle">
+  <div class="lho-shell">
+    <header class="lho-header">
+      <div>
+        <h2 id="lhoTitle">NIGHT OPERATIONS HUB</h2>
+        <p class="lho-kicker">HOLLOW INDUSTRIES™ // INTERNAL FIELD INTELLIGENCE</p>
+      </div>
+      <button class="lho-close" type="button" id="lhoClose">CLOSE [ESC]</button>
+    </header>
+    <nav class="lho-tabs" role="tablist" aria-label="Operations hub sections">
+      <button type="button" role="tab" aria-selected="true" data-lho-tab="overview">Overview</button>
+      <button type="button" role="tab" aria-selected="false" data-lho-tab="challenges">Challenges</button>
+      <button type="button" role="tab" aria-selected="false" data-lho-tab="rooms">Room intelligence</button>
+      <button type="button" role="tab" aria-selected="false" data-lho-tab="notes">Field notebook</button>
+      <button type="button" role="tab" aria-selected="false" data-lho-tab="settings">Preferences</button>
+    </nav>
+    <main class="lho-content">
+      <section class="lho-page" data-lho-page="overview" role="tabpanel">
+        <div class="lho-stats">
+          <div class="lho-stat"><strong id="lhoStatNotes">0</strong><span>FIELD NOTES</span></div>
+          <div class="lho-stat"><strong id="lhoStatChecks">0</strong><span>CHALLENGES CLEARED</span></div>
+          <div class="lho-stat"><strong id="lhoStatRooms">0</strong><span>ROOMS REVIEWED</span></div>
+          <div class="lho-stat"><strong id="lhoStatVisits">0</strong><span>HUB VISITS</span></div>
+        </div>
+        <div class="lho-card-grid">
+          <article class="lho-card">
+            <h3>SHIFT DIRECTIVE</h3>
+            <p id="lhoDirective">Keep the cameras online. Record anything that changes. Do not assume an empty room is a safe room.</p>
+            <div class="lho-toolbar"><button type="button" id="lhoRandomDirective">Generate directive</button><button type="button" id="lhoOpenNotes">Write a field note</button></div>
+          </article>
+          <article class="lho-card">
+            <h3>INVESTIGATION READINESS</h3>
+            <p>Use the hub to track your own observations. It does not reveal live monster positions or change enemy behavior.</p>
+            <div class="lho-progress"><span id="lhoOverallBar"></span></div>
+            <small id="lhoOverallText">0% of personal records completed</small>
+          </article>
+          <article class="lho-card">
+            <h3>RECENT FIELD NOTE</h3>
+            <p id="lhoLatestNote">No notes recorded. Add a note when you notice a suspicious sound, room detail, or camera anomaly.</p>
+          </article>
+          <article class="lho-card">
+            <h3>ARCHIVE STATUS</h3>
+            <p id="lhoStorageStatus">Records are stored locally in this browser on this device.</p>
+            <div class="lho-toolbar"><button type="button" id="lhoExportAll">Export hub report</button></div>
+          </article>
+        </div>
+      </section>
+      <section class="lho-page" data-lho-page="challenges" role="tabpanel" hidden>
+        <p>Optional personal objectives. Check them off when you complete them during a shift. These are self-reported tasks and do not secretly read monster locations.</p>
+        <div class="lho-card-grid" id="lhoChallengeList"></div>
+        <div class="lho-toolbar"><button type="button" id="lhoResetChallenges">Reset challenge checklist</button></div>
+      </section>
+      <section class="lho-page" data-lho-page="rooms" role="tabpanel" hidden>
+        <p>Use this index to keep track of areas you have inspected. Room notes are descriptive prompts, not a live threat detector.</p>
+        <div class="lho-card-grid" id="lhoRoomList"></div>
+      </section>
+      <section class="lho-page" data-lho-page="notes" role="tabpanel" hidden>
+        <form id="lhoNoteForm">
+          <div class="lho-fields">
+            <label>Record type
+              <select id="lhoNoteType">
+                <option>Camera anomaly</option>
+                <option>Audio clue</option>
+                <option>Room detail</option>
+                <option>Monster sighting</option>
+                <option>Power event</option>
+                <option>Personal theory</option>
+                <option>Shift summary</option>
+              </select>
+            </label>
+            <label>Room / camera
+              <select id="lhoNoteRoom">
+                <option>Unspecified</option>
+                <option>Cam 1 — Stage</option>
+                <option>Cam 2 — Main Hall</option>
+                <option>Cam 3 — West Passage</option>
+                <option>Cam 4 — East Passage</option>
+                <option>Cam 5 — Workshop</option>
+                <option>Cam 6 — Front Lobby</option>
+                <option>Cam 7 — Dressing Room</option>
+                <option>Cam 8 — Basement</option>
+                <option>Cam 9 — Prop Archive</option>
+                <option>Cam 10 — Generator</option>
+                <option>Cam 11 — Service Tunnel</option>
+                <option>Free Mode / unknown area</option>
+              </select>
+            </label>
+          </div>
+          <label>Observation details
+            <textarea id="lhoNoteText" maxlength="1800" required placeholder="Write what you observed. Separate confirmed details from guesses."></textarea>
+          </label>
+          <div class="lho-toolbar"><button type="submit">Save field note</button><button type="button" id="lhoClearDraft">Clear draft</button></div>
+        </form>
+        <h3>Saved records</h3>
+        <div class="lho-toolbar">
+          <input id="lhoSearchNotes" type="search" placeholder="Search saved notes" aria-label="Search saved notes">
+          <select id="lhoFilterNotes" aria-label="Filter notes by type"><option value="ALL">All record types</option><option>Camera anomaly</option><option>Audio clue</option><option>Room detail</option><option>Monster sighting</option><option>Power event</option><option>Personal theory</option><option>Shift summary</option></select>
+          <button type="button" id="lhoExportNotes">Export notes</button>
+        </div>
+        <div class="lho-record-list" id="lhoSavedNotes"></div>
+      </section>
+      <section class="lho-page" data-lho-page="settings" role="tabpanel" hidden>
+        <div class="lho-card-grid">
+          <article class="lho-card">
+            <h3>INTERFACE PREFERENCES</h3>
+            <label><span><input id="lhoCompact" type="checkbox"> Compact hub cards</span></label>
+            <label><span><input id="lhoConfirmDelete" type="checkbox" checked> Confirm before deleting notes</span></label>
+            <label><span><input id="lhoTimestamp" type="checkbox" checked> Include timestamps in exports</span></label>
+            <p>Preferences apply to this hub only and are saved in this browser.</p>
+          </article>
+          <article class="lho-card">
+            <h3>DATA MANAGEMENT</h3>
+            <p>Export a backup before clearing local records. Clearing hub records does not erase the separate Night Watchman's Log or Evidence Archive.</p>
+            <div class="lho-toolbar"><button type="button" id="lhoBackup">Download JSON backup</button><button type="button" id="lhoClearAll" class="lho-warning">Clear hub data</button></div>
+          </article>
+        </div>
+      </section>
+    </main>
+    <footer class="lho-footer">LOCAL FIELD TOOL // Does not identify hidden monster locations, alter survival rules, or send data to a server. Keyboard shortcut: F4. Press Escape to close.</footer>
+  </div>
+</section>
+
+<script>
+(function () {
+  'use strict';
+
+  const hub = document.getElementById('lhOperationsHub');
+  const openButton = document.getElementById('lhHubOpen');
+  if (!hub || !openButton) return;
+
+  const $ = (selector) => hub.querySelector(selector);
+  const $$ = (selector) => Array.from(hub.querySelectorAll(selector));
+  const STORAGE_KEY = 'lanternHollow.operationsHub.v1';
+  const DEFAULT_STATE = {
+    notes: [],
+    challenges: {},
+    rooms: {},
+    visits: 0,
+    preferences: {
+      compact: false,
+      confirmDelete: true,
+      timestamps: true
+    }
+  };
+
+  const roomData = [
+    { id: 'stage', name: 'Grand Stage', camera: 1, clue: 'Check curtains, prop silhouettes, and changes to the stage dressing.', task: 'Review the stage feed and record one detail.' },
+    { id: 'hall', name: 'Main Hall', camera: 2, clue: 'Long sightlines can make small movement difficult to judge.', task: 'Review the hall and compare its visible details.' },
+    { id: 'west', name: 'West Passage', camera: 3, clue: 'Look for door states, shadows, and anything blocking the walkway.', task: 'Inspect the passage for an environmental change.' },
+    { id: 'east', name: 'East Passage', camera: 4, clue: 'Compare lighting and visible objects with your earlier observations.', task: 'Record whether the passage looks different.' },
+    { id: 'workshop', name: 'Workshop', camera: 5, clue: 'Tools and equipment can create confusing silhouettes.', task: 'Note one object or lighting detail in the workshop.' },
+    { id: 'lobby', name: 'Front Lobby', camera: 6, clue: 'Pay attention to the entrance and the areas near the edges of the frame.', task: 'Review the lobby and make a short note.' },
+    { id: 'dressing', name: 'Dressing Room', camera: 7, clue: 'Mirrors, costumes, and hanging fabric can distort what you think you saw.', task: 'Inspect the dressing room carefully.' },
+    { id: 'basement', name: 'Basement', camera: 8, clue: 'Low light reduces certainty; label assumptions as unconfirmed.', task: 'Review the basement and mark one uncertainty.' },
+    { id: 'archive', name: 'Prop Archive', camera: 9, clue: 'Repeated shapes can make an object appear to have shifted.', task: 'Check the archive for a notable room detail.' },
+    { id: 'generator', name: 'Generator Room', camera: 10, clue: 'Electrical noise and flicker can affect the way a scene feels.', task: 'Review the generator room and note its state.' },
+    { id: 'tunnel', name: 'Service Tunnel', camera: 11, clue: 'Dark corners and narrow perspective can hide ordinary detail.', task: 'Inspect the tunnel and record what remains uncertain.' }
+  ];
+
+  const challengeData = [
+    { id: 'first-note', title: 'First Report', detail: 'Save your first field note.', reward: 'Field recorder' },
+    { id: 'five-notes', title: 'Paper Trail', detail: 'Save five field notes.', reward: 'Archivist mark' },
+    { id: 'three-types', title: 'Different Angles', detail: 'Save notes in three different categories.', reward: 'Cross-reference mark' },
+    { id: 'stage-review', title: 'House Lights', detail: 'Mark the Grand Stage as reviewed.', reward: 'Stage review mark' },
+    { id: 'hall-review', title: 'Long Hall', detail: 'Mark the Main Hall as reviewed.', reward: 'Hall review mark' },
+    { id: 'service-review', title: 'Below the Floor', detail: 'Review the basement and service tunnel.', reward: 'Service mark' },
+    { id: 'all-rooms', title: 'Full Sweep', detail: 'Mark all eleven camera areas as reviewed.', reward: 'Complete sweep mark' },
+    { id: 'audio-clue', title: 'Listen Closely', detail: 'Save an Audio clue note.', reward: 'Audio analyst mark' },
+    { id: 'camera-clue', title: 'Static Reader', detail: 'Save a Camera anomaly note.', reward: 'Signal analyst mark' },
+    { id: 'theory', title: 'Unconfirmed', detail: 'Write a Personal theory and label it as a theory.', reward: 'Careful investigator mark' },
+    { id: 'power', title: 'Power Watch', detail: 'Record a Power event.', reward: 'Power log mark' },
+    { id: 'summary', title: 'End-of-Shift', detail: 'Save a Shift summary note.', reward: 'Shift recorder mark' },
+    { id: 'ten-rooms', title: 'Building Memory', detail: 'Review at least ten room entries.', reward: 'Building memory mark' },
+    { id: 'all-types', title: 'Categorical', detail: 'Use every available note category at least once.', reward: 'Classification mark' },
+    { id: 'export', title: 'Keep a Copy', detail: 'Export a hub report or JSON backup.', reward: 'Backup keeper mark' },
+    { id: 'return-visit', title: 'Back on Watch', detail: 'Open the hub on two separate visits.', reward: 'Returning watch mark' },
+    { id: 'room-note', title: 'Ground Truth', detail: 'Save a note tied to a specific room or camera.', reward: 'Grounding mark' },
+    { id: 'long-note', title: 'Detailed Account', detail: 'Save a note containing at least 120 characters.', reward: 'Detailed report mark' },
+    { id: 'five-rooms', title: 'Sector Survey', detail: 'Review five different room entries.', reward: 'Sector survey mark' },
+    { id: 'steady-hand', title: 'Steady Hand', detail: 'Complete any five optional challenges.', reward: 'Steady hand mark' }
+  ];
+
+  const directives = [
+    'Compare the visible room details before deciding that something has moved.',
+    'Write down what you can confirm, then keep theories in a separate category.',
+    'Review two camera areas and note one difference in lighting or composition.',
+    'If an audio clue seems important, record when and where you noticed it.',
+    'Check the edges of the frame before drawing conclusions about an empty room.',
+    'Use the room index to track what you have inspected during this shift.',
+    'Preserve a backup of your notes before clearing any local records.',
+    'Describe an anomaly plainly; avoid guessing at its cause until you have evidence.',
+    'Review an area you have not checked recently and document the uncertainty.',
+    'Make a short end-of-shift summary of the strongest confirmed observations.'
+  ];
+
+  let state = loadState();
+  let lastFocus = null;
+  let currentTab = 'overview';
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return structuredCloneSafe(DEFAULT_STATE);
+      const parsed = JSON.parse(raw);
+      return {
+        ...structuredCloneSafe(DEFAULT_STATE),
+        ...parsed,
+        notes: Array.isArray(parsed.notes) ? parsed.notes : [],
+        challenges: parsed.challenges && typeof parsed.challenges === 'object' ? parsed.challenges : {},
+        rooms: parsed.rooms && typeof parsed.rooms === 'object' ? parsed.rooms : {},
+        preferences: { ...DEFAULT_STATE.preferences, ...(parsed.preferences || {}) }
+      };
+    } catch (error) {
+      return structuredCloneSafe(DEFAULT_STATE);
+    }
+  }
+
+  function structuredCloneSafe(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      $('#lhoStorageStatus').textContent = 'Local records saved in this browser on this device.';
+    } catch (error) {
+      $('#lhoStorageStatus').textContent = 'Browser storage is unavailable. Export a backup to keep your notes.';
+    }
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, (character) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[character]);
+  }
+
+  function openHub() {
+    lastFocus = document.activeElement;
+    state.visits += 1;
+    saveState();
+    hub.hidden = false;
+    renderAll();
+    $('#lhoClose').focus();
+  }
+
+  function closeHub() {
+    hub.hidden = true;
+    if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+  }
+
+  function setTab(name) {
+    currentTab = name;
+    $$('[data-lho-tab]').forEach((button) => {
+      const selected = button.dataset.lhoTab === name;
+      button.setAttribute('aria-selected', String(selected));
+      button.tabIndex = selected ? 0 : -1;
+    });
+    $$('[data-lho-page]').forEach((page) => {
+      page.hidden = page.dataset.lhoPage !== name;
+    });
+    const active = $('[data-lho-tab="' + name + '"]');
+    if (active) active.focus();
+  }
+
+  function addNote(type, room, text) {
+    const note = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      type,
+      room,
+      text: text.trim(),
+      createdAt: new Date().toISOString()
+    };
+    state.notes.push(note);
+    saveState();
+    renderAll();
+    return note;
+  }
+
+  function dateLabel(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Unknown time';
+    return date.toLocaleString();
+  }
+
+  function markRoomReviewed(roomId, checked) {
+    if (checked) state.rooms[roomId] = new Date().toISOString();
+    else delete state.rooms[roomId];
+    saveState();
+    renderAll();
+  }
+
+  function markChallenge(challengeId, checked) {
+    if (checked) state.challenges[challengeId] = new Date().toISOString();
+    else delete state.challenges[challengeId];
+    saveState();
+    renderAll();
+  }
+
+  function deriveChallenges() {
+    const noteTypes = new Set(state.notes.map((note) => note.type));
+    const roomCount = roomData.filter((room) => state.rooms[room.id]).length;
+    const reviewed = (id) => Boolean(state.rooms[id]);
+    const derived = {
+      'first-note': state.notes.length >= 1,
+      'five-notes': state.notes.length >= 5,
+      'three-types': noteTypes.size >= 3,
+      'stage-review': reviewed('stage'),
+      'hall-review': reviewed('hall'),
+      'service-review': reviewed('basement') && reviewed('tunnel'),
+      'all-rooms': roomCount === roomData.length,
+      'audio-clue': noteTypes.has('Audio clue'),
+      'camera-clue': noteTypes.has('Camera anomaly'),
+      'theory': noteTypes.has('Personal theory'),
+      'power': noteTypes.has('Power event'),
+      'summary': noteTypes.has('Shift summary'),
+      'ten-rooms': roomCount >= 10,
+      'all-types': noteTypes.size === 7,
+      'return-visit': state.visits >= 2,
+      'room-note': state.notes.some((note) => note.room !== 'Unspecified'),
+      'long-note': state.notes.some((note) => note.text.length >= 120),
+      'five-rooms': roomCount >= 5
+    };
+    const manualCount = Object.keys(state.challenges).filter((id) => state.challenges[id]).length;
+    derived.export = Boolean(state.challenges.export);
+    derived['steady-hand'] = manualCount >= 5;
+    return derived;
+  }
+
+  function renderChallenges() {
+    const derived = deriveChallenges();
+    const host = $('#lhoChallengeList');
+    host.innerHTML = challengeData.map((challenge) => {
+      const complete = Boolean(derived[challenge.id] || state.challenges[challenge.id]);
+      return '<article class="lho-card">' +
+        '<h3>' + escapeHtml(challenge.title) + '</h3>' +
+        '<p>' + escapeHtml(challenge.detail) + '</p>' +
+        '<small>RECOGNITION: ' + escapeHtml(challenge.reward) + '</small>' +
+        '<div class="lho-progress"><span style="width:' + (complete ? '100%' : '0%') + '"></span></div>' +
+        '<label><span><input type="checkbox" data-lho-challenge="' + escapeHtml(challenge.id) + '" ' + (complete ? 'checked' : '') + '> Mark complete</span></label>' +
+      '</article>';
+    }).join('');
+    host.querySelectorAll('[data-lho-challenge]').forEach((input) => {
+      input.addEventListener('change', () => markChallenge(input.dataset.lhoChallenge, input.checked));
+    });
+  }
+
+  function renderRooms() {
+    const host = $('#lhoRoomList');
+    host.innerHTML = roomData.map((room) => {
+      const reviewed = Boolean(state.rooms[room.id]);
+      return '<article class="lho-card">' +
+        '<h3>CAM ' + String(room.camera).padStart(2, '0') + ' // ' + escapeHtml(room.name) + '</h3>' +
+        '<p>' + escapeHtml(room.clue) + '</p>' +
+        '<small>OPTIONAL TASK: ' + escapeHtml(room.task) + '</small>' +
+        '<div class="lho-toolbar"><button type="button" data-lho-room-note="' + escapeHtml(room.id) + '">Write room note</button></div>' +
+        '<label><span><input type="checkbox" data-lho-room="' + escapeHtml(room.id) + '" ' + (reviewed ? 'checked' : '') + '> Mark reviewed</span></label>' +
+        (reviewed ? '<small class="lho-good">REVIEWED ' + escapeHtml(dateLabel(state.rooms[room.id])) + '</small>' : '<small>NOT YET REVIEWED</small>') +
+      '</article>';
+    }).join('');
+    host.querySelectorAll('[data-lho-room]').forEach((input) => {
+      input.addEventListener('change', () => markRoomReviewed(input.dataset.lhoRoom, input.checked));
+    });
+    host.querySelectorAll('[data-lho-room-note]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const room = roomData.find((entry) => entry.id === button.dataset.lhoRoomNote);
+        if (!room) return;
+        $('#lhoNoteRoom').value = 'Cam ' + room.camera + ' — ' + room.name;
+        setTab('notes');
+        $('#lhoNoteText').focus();
+      });
+    });
+  }
+
+  function renderNotes() {
+    const host = $('#lhoSavedNotes');
+    const search = ($('#lhoSearchNotes').value || '').toLowerCase().trim();
+    const filter = $('#lhoFilterNotes').value;
+    const visible = state.notes.filter((note) => {
+      const matchesType = filter === 'ALL' || note.type === filter;
+      const searchable = [note.type, note.room, note.text].join(' ').toLowerCase();
+      return matchesType && searchable.includes(search);
+    }).slice().reverse();
+    if (!visible.length) {
+      host.innerHTML = '<div class="lho-empty">No notes match this view. Add an observation above or change the filter.</div>';
+      return;
+    }
+    host.innerHTML = visible.map((note) => {
+      const stamp = state.preferences.timestamps ? dateLabel(note.createdAt) : 'Saved record';
+      return '<article class="lho-record">' +
+        '<time>' + escapeHtml(stamp) + '</time>' +
+        '<div><p><strong>' + escapeHtml(note.type) + '</strong> — ' + escapeHtml(note.text) + '</p>' +
+        '<small>' + escapeHtml(note.room) + '</small></div>' +
+        '<button type="button" data-lho-delete-note="' + escapeHtml(note.id) + '" aria-label="Delete this note">Delete</button>' +
+      '</article>';
+    }).join('');
+    host.querySelectorAll('[data-lho-delete-note]').forEach((button) => {
+      button.addEventListener('click', () => {
+        if (state.preferences.confirmDelete && !window.confirm('Delete this field note? This cannot be undone unless you have a backup.')) return;
+        state.notes = state.notes.filter((note) => note.id !== button.dataset.lhoDeleteNote);
+        saveState();
+        renderAll();
+      });
+    });
+  }
+
+  function renderOverview() {
+    const roomCount = roomData.filter((room) => state.rooms[room.id]).length;
+    const derived = deriveChallenges();
+    const completeCount = challengeData.filter((challenge) => derived[challenge.id] || state.challenges[challenge.id]).length;
+    $('#lhoStatNotes').textContent = String(state.notes.length);
+    $('#lhoStatChecks').textContent = String(completeCount);
+    $('#lhoStatRooms').textContent = roomCount + '/11';
+    $('#lhoStatVisits').textContent = String(state.visits);
+    $('#lhoOverallBar').style.width = Math.round((completeCount / challengeData.length) * 100) + '%';
+    $('#lhoOverallText').textContent = Math.round((completeCount / challengeData.length) * 100) + '% of optional objectives complete';
+    const latest = state.notes[state.notes.length - 1];
+    $('#lhoLatestNote').textContent = latest ? latest.type + ' / ' + latest.room + ': ' + latest.text : 'No notes recorded. Add a note when you notice a suspicious sound, room detail, or camera anomaly.';
+  }
+
+  function renderAll() {
+    renderOverview();
+    renderChallenges();
+    renderRooms();
+    renderNotes();
+    $('#lhoCompact').checked = Boolean(state.preferences.compact);
+    $('#lhoConfirmDelete').checked = Boolean(state.preferences.confirmDelete);
+    $('#lhoTimestamp').checked = Boolean(state.preferences.timestamps);
+    hub.classList.toggle('lho-compact', Boolean(state.preferences.compact));
+  }
+
+  function reportText() {
+    const lines = [
+      'LANTERN HOLLOW — NIGHT OPERATIONS HUB REPORT',
+      'HOLLOW INDUSTRIES™ / LOCAL FIELD INTELLIGENCE',
+      'Exported: ' + new Date().toLocaleString(),
+      'Notes: ' + state.notes.length,
+      'Rooms reviewed: ' + roomData.filter((room) => state.rooms[room.id]).length + '/11',
+      'Hub visits: ' + state.visits,
+      '',
+      'ROOM REVIEW STATUS'
+    ];
+    roomData.forEach((room) => {
+      lines.push((state.rooms[room.id] ? '[X] ' : '[ ] ') + 'Cam ' + room.camera + ' — ' + room.name);
+    });
+    lines.push('', 'FIELD NOTES');
+    state.notes.forEach((note, index) => {
+      lines.push('');
+      lines.push((index + 1) + '. ' + note.type + ' | ' + note.room);
+      if (state.preferences.timestamps) lines.push('   ' + dateLabel(note.createdAt));
+      lines.push('   ' + note.text.replace(/\n/g, '\n   '));
+    });
+    lines.push('', 'CHALLENGES');
+    const derived = deriveChallenges();
+    challengeData.forEach((challenge) => {
+      lines.push((derived[challenge.id] || state.challenges[challenge.id] ? '[X] ' : '[ ] ') + challenge.title + ' — ' + challenge.detail);
+    });
+    return lines.join('\n');
+  }
+
+  function downloadBlob(filename, contents, mimeType) {
+    const blob = new Blob([contents], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function exportReport() {
+    downloadBlob('Lantern-Hollow-Operations-Report.txt', reportText(), 'text/plain;charset=utf-8');
+    state.challenges.export = new Date().toISOString();
+    saveState();
+    renderAll();
+  }
+
+  function exportJson() {
+    const backup = {
+      format: 'lantern-hollow-operations-hub',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      data: state
+    };
+    downloadBlob('Lantern-Hollow-Hub-Backup.json', JSON.stringify(backup, null, 2), 'application/json;charset=utf-8');
+    state.challenges.export = new Date().toISOString();
+    saveState();
+    renderAll();
+  }
+
+  openButton.addEventListener('click', openHub);
+  $('#lhoClose').addEventListener('click', closeHub);
+  hub.addEventListener('click', (event) => {
+    if (event.target === hub) closeHub();
+  });
+  $$('[data-lho-tab]').forEach((button) => {
+    button.addEventListener('click', () => setTab(button.dataset.lhoTab));
+  });
+  $('#lhoNoteForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const text = $('#lhoNoteText').value.trim();
+    if (!text) {
+      $('#lhoNoteText').focus();
+      return;
+    }
+    addNote($('#lhoNoteType').value, $('#lhoNoteRoom').value, text);
+    $('#lhoNoteText').value = '';
+    setTab('notes');
+  });
+  $('#lhoClearDraft').addEventListener('click', () => { $('#lhoNoteText').value = ''; });
+  $('#lhoSearchNotes').addEventListener('input', renderNotes);
+  $('#lhoFilterNotes').addEventListener('change', renderNotes);
+  $('#lhoOpenNotes').addEventListener('click', () => { setTab('notes'); $('#lhoNoteText').focus(); });
+  $('#lhoRandomDirective').addEventListener('click', () => {
+    const choice = directives[Math.floor(Math.random() * directives.length)];
+    $('#lhoDirective').textContent = choice;
+  });
+  $('#lhoExportAll').addEventListener('click', exportReport);
+  $('#lhoExportNotes').addEventListener('click', exportReport);
+  $('#lhoBackup').addEventListener('click', exportJson);
+  $('#lhoResetChallenges').addEventListener('click', () => {
+    if (!window.confirm('Reset all manually checked challenge items? Evidence-derived achievements will still appear when their requirements are met.')) return;
+    state.challenges = {};
+    saveState();
+    renderAll();
+  });
+  $('#lhoCompact').addEventListener('change', (event) => {
+    state.preferences.compact = event.target.checked;
+    saveState();
+    renderAll();
+  });
+  $('#lhoConfirmDelete').addEventListener('change', (event) => {
+    state.preferences.confirmDelete = event.target.checked;
+    saveState();
+  });
+  $('#lhoTimestamp').addEventListener('change', (event) => {
+    state.preferences.timestamps = event.target.checked;
+    saveState();
+    renderNotes();
+  });
+  $('#lhoClearAll').addEventListener('click', () => {
+    if (!window.confirm('Clear all Night Operations Hub notes, room reviews, challenge marks, and visit count? Export a backup first if you want to keep them.')) return;
+    state = structuredCloneSafe(DEFAULT_STATE);
+    saveState();
+    renderAll();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'F4') {
+      event.preventDefault();
+      if (hub.hidden) openHub();
+      else closeHub();
+      return;
+    }
+    if (event.key === 'Escape' && !hub.hidden) {
+      closeHub();
+      return;
+    }
+    if (!hub.hidden && event.key === 'Tab') {
+      const focusable = Array.from(hub.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'))
+        .filter((element) => element.offsetParent !== null);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+  });
+
+  const compactStyle = document.createElement('style');
+  compactStyle.textContent = '#lhOperationsHub.lho-compact .lho-card{padding:7px}#lhOperationsHub.lho-compact .lho-card p{font-size:11px;margin-bottom:5px}';
+  document.head.appendChild(compactStyle);
+  renderAll();
+})();
+</script>
+
+
+<script>
+(function(){
+  const panel=document.getElementById('phonePanel');
+  const open=document.getElementById('openPhone');
+  const status=document.getElementById('phoneStatus');
+  const call=document.getElementById('callPolice');
+  const hang=document.getElementById('phoneHangup');
+  const close=document.getElementById('phoneClose');
+  if(!panel||!open||!status||!call||!hang||!close)return;
+  let callInProgress=false;
+  function showPhone(){panel.hidden=false;status.textContent='The receiver is warm. A faint voice crackles on the line.';open.setAttribute('aria-expanded','true');call.disabled=false;call.textContent='☎ CALL POLICE';call.focus();}
+  function hidePhone(){panel.hidden=true;open.setAttribute('aria-expanded','false');open.focus();}
+  open.setAttribute('aria-haspopup','dialog');open.setAttribute('aria-expanded','false');
+  open.addEventListener('click',showPhone);
+  close.addEventListener('click',hidePhone);
+  hang.addEventListener('click',function(){callInProgress=false;status.textContent='You hang up. The line goes quiet, but something clicks on the other end.';call.disabled=false;call.textContent='☎ CALL POLICE';});
+  call.addEventListener('click',function(){
+    if(callInProgress)return;callInProgress=true;call.disabled=true;call.textContent='CONNECTING…';
+    status.textContent='Dialing 911… the line hisses with static. Keep the receiver close.';
+    window.setTimeout(function(){if(panel.hidden||!callInProgress)return;status.textContent='DISPATCH: “911, what is your emergency?” You report the theater and the things moving inside.';call.textContent='LINE OPEN';},1800);
+    window.setTimeout(function(){if(panel.hidden||!callInProgress)return;status.textContent='DISPATCH: “We have your location. Officers are being sent to Lantern Hollow. Stay behind a locked door and keep the line open.” The signal begins to break up.';call.textContent='DISPATCH NOTIFIED';call.disabled=false;callInProgress=false;},4200);
+  });
+  panel.addEventListener('click',function(event){if(event.target===panel)hidePhone();});
+  document.addEventListener('keydown',function(event){if(event.key==='Escape'&&!panel.hidden)hidePhone();});
+})();
+</script>
 </body></html>
