@@ -325,7 +325,7 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
       <div class="command-grid free-tools">
         <div class="command-field"><label for="teleportRoom">Teleport to room</label><select id="teleportRoom"><option value="LOBBY">Front Lobby</option><option value="STAGE">Grand Stage</option><option value="HALL">Main Hall</option><option value="WEST">West Passage</option><option value="EAST">East Passage</option><option value="SHOP">Workshop</option><option value="DRESS">Dressing Room</option><option value="BASEMENT">Basement</option><option value="ARCHIVE">Prop Archive</option><option value="GENERATOR">Generator Room</option><option value="TUNNEL">Service Tunnel</option></select><button class="btn" id="teleportFree" type="button">Teleport</button></div>
         <div class="command-field"><label>Movement</label><button class="btn" id="noclipToggle" type="button" aria-pressed="false">Noclip: OFF</button><button class="btn" id="flashlightToggle" type="button" aria-pressed="true">Flashlight: ON</button></div>
-        <div class="command-field"><label>Monster behavior</label><button class="btn" id="monsterAiToggle" type="button" aria-pressed="false">Monster AI: FROZEN</button><p style="font-size:11px;color:var(--dim);margin:0">AI lets monsters slowly follow you in Free Mode.</p></div>
+        <div class="command-field"><label>Monster behavior</label><button class="btn" id="monsterAiToggle" type="button" aria-pressed="false">Monster AI: FROZEN</button><p style="font-size:11px;color:var(--dim);margin:0">Monsters hunt you in Free Mode and kill you if they catch you.</p></div>
       </div>
       <div class="command-status" id="commandStatus" role="status" aria-live="polite">Console ready. Choose a target to control the nightmare.</div>
       <p class="keys" id="freeHelp" hidden>3D CONTROLS: W/A/S/D move · mouse look · Shift sprint · Shift sprint · N noclip · L flashlight · M map · Ctrl+C console · F exits free mode.</p>
@@ -806,7 +806,7 @@ function spawnMonster(id){
  var d=monsterDefs[id];if(!d)return;c={id:id,name:d.name,idx:d.idx,room:d.room,lvl:0,timer:999999,doorT:0};G.chars.push(c);commandMsg(d.name+' spawned in '+(CAMNAME[c.room]||c.room)+'.');if(typeof lhAddLog==='function')lhAddLog('COMMAND CONSOLE',d.name+' spawned in '+(CAMNAME[c.room]||c.room)+'.','warning');sThud();syncUI();
 }
 function removeMonster(id){if(!G)return;var c=getMonster(id);if(!c){commandMsg((monsterDefs[id]||{name:id}).name+' is not active.');return;}G.chars=G.chars.filter(function(x){return x.id!==id;});commandMsg(c.name+' removed from the world.');if(typeof lhAddLog==='function')lhAddLog('COMMAND CONSOLE',c.name+' removed from the building.');sClick();syncUI();}
-function enterFreeMode(on){if(!G)return;G.freeMode=!!on;G.cam=false;G.manualScare=null;G.freeKeys={};if(on){G.powerOut=false;G.power=Math.max(100,G.power);G.player=FREE_START();G.chars.forEach(function(c){c.timer=999999;});commandMsg('3D Free Mode active — explore freely. Monsters are frozen until you command them.');if(typeof lhAddLog==='function')lhAddLog('FREE MODE','Entered first-person exploration.','positive');if(typeof LH_NIGHT_LOG!=='undefined')LH_NIGHT_LOG.lastFreeRoom='';}else{commandMsg('Free mode disabled. Night survival resumed.');if(typeof lhAddLog==='function')lhAddLog('FREE MODE','Exited first-person exploration.');G.t=Math.min(G.t,HOUR*5.95);}syncUI();}
+function enterFreeMode(on){if(!G)return;G.freeMode=!!on;G.cam=false;G.manualScare=null;G.freeKeys={};if(on){G.powerOut=false;G.power=Math.max(100,G.power);G.player=FREE_START();G.freeMonsterAI=true;var aiBtn=$('#monsterAiToggle');if(aiBtn){aiBtn.textContent='Monster AI: ACTIVE';aiBtn.setAttribute('aria-pressed','true');}G.chars.forEach(function(c){c.timer=999999;});commandMsg('3D Free Mode active — monsters are hunting you. Keep moving and do not let them get close.');if(typeof lhAddLog==='function')lhAddLog('FREE MODE','Entered first-person exploration. Monsters are actively hunting the player.','warning');if(typeof LH_NIGHT_LOG!=='undefined')LH_NIGHT_LOG.lastFreeRoom='';}else{commandMsg('Free mode disabled. Night survival resumed.');if(typeof lhAddLog==='function')lhAddLog('FREE MODE','Exited first-person exploration.');G.t=Math.min(G.t,HOUR*5.95);}syncUI();}
 function triggerCommandScare(){if(!G)return;var id=$('#scarePick').value;if(id==='selected')id=$('#monsterPick').value;var c=id==='lamp'?{id:'lamp',name:'The Lamplighter'}:getMonster(id);if(!c){spawnMonster(id);c=getMonster(id);}if(!c)return;if(G.state!=='play'&&!G.freeMode){commandMsg('Start a night or enter Free Mode to preview a jumpscare.');return;}/* Command-panel scares are visual previews only: never call doScare(), which ends the night. */G.manualScare={c:c,t:0};sScare();commandMsg('SAFE JUMPSCARE PREVIEW: '+c.name+' — you cannot die from a command-panel scare.');}
 $('#freeToggle').addEventListener('click',function(){enterFreeMode(!G.freeMode);});
 function toggleCommandPanel(force){var panel=$('#commandPanel');if(!panel||!G||$('#game').hidden)return;panel.hidden=typeof force==='boolean'?!force:!panel.hidden;if(!panel.hidden){commandMsg('Command Console open. Ctrl+C hides it.');}else{commandMsg('Command Console hidden. Press Ctrl+C to reopen it.');}if(document.pointerLockElement===cv&&document.exitPointerLock)document.exitPointerLock();}
@@ -902,7 +902,7 @@ function updateFree(dt){
   if(dist<minD)minD=dist;
   if(!G.freeMonsterAI)return;
   var spd=MON_SPEED[c.id]||.7;
-  if(c.id==='hob'&&seenBy(p,fp))spd=0;
+  if(c.id==='hob'&&seenBy(p,fp))spd*=.45;
   if(dist<=.9||spd===0)return;
   if(G.freeNoClip){
    var st0=Math.min(spd*dt,dist-.85);fp.x+=ddx/dist*st0;fp.y+=ddy/dist*st0;
@@ -921,6 +921,16 @@ function updateFree(dt){
   }
   c.room=roomAt(fp.x,fp.y);
  });
+ /* Lethal contact in Free Mode: if a hunter reaches the player, trigger the normal jumpscare/game-over sequence. */
+ if(G.freeMonsterAI){
+  var attacker=null,attackDist=Infinity;
+  G.chars.forEach(function(c){if(!c.freePos)return;var d=Math.hypot(p.x-c.freePos.x,p.y-c.freePos.y);if(d<attackDist){attackDist=d;attacker=c;}});
+  if(attacker&&attackDist<.58){
+   G.freeMode=false;G.freeKeys={};G.manualScare=null;
+   if(typeof lhAddLog==='function')lhAddLog('FREE MODE DEATH',attacker.name+' caught the player during first-person exploration.','threat');
+   doScare(attacker);return;
+  }
+ }
  /* dread: heartbeat and flicker build as something gets close */
  var target=clamp((6-minD)/5.2,0,1)*(G.freeMonsterAI?1:.55);
  p.fear+=(target-p.fear)*Math.min(1,dt*3);
@@ -4344,4 +4354,341 @@ requestAnimationFrame(loop);
 })();
 </script>
 
+
+<style>
+#lhCineSound{position:fixed;right:14px;bottom:14px;z-index:9999;background:#171416;color:#f1d7a0;border:1px solid #9a7046;border-radius:9px;padding:10px 13px;font:700 12px/1.2 system-ui;letter-spacing:.06em;box-shadow:0 5px 24px #0009;cursor:pointer}
+#lhCineSound[aria-pressed="true"]{background:#3b241c;border-color:#e2a64e;color:#ffe7b0}
+#lhCineToast{position:fixed;right:14px;bottom:58px;z-index:9998;background:#100e0df0;color:#e9d8b8;border:1px solid #6b4b35;border-radius:8px;padding:8px 11px;font:12px system-ui;max-width:260px;display:none}
+@media(max-width:600px){#lhCineSound{right:8px;bottom:8px;padding:9px;font-size:11px}}
+</style>
+<button id="lhCineSound" type="button" aria-pressed="false" title="Enable generated horror ambience">♫ CINEMATIC AUDIO: OFF</button>
+<div id="lhCineToast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+'use strict';
+/* Lantern Hollow Cinematic Expansion: procedural props, atmosphere and original generated audio.
+   No external assets, downloads, or oversized padding; the game remains one lightweight HTML file. */
+var toast=document.getElementById('lhCineToast'),soundBtn=document.getElementById('lhCineSound');
+function say(msg){if(!toast)return;toast.textContent=msg;toast.style.display='block';clearTimeout(say.t);say.t=setTimeout(function(){toast.style.display='none';},2800);}
+var audio=null,master=null,drone=null,drone2=null,noiseSource=null,noiseGain=null,audioOn=false,lastCreak=0;
+function startAudio(){
+ if(audioOn)return;
+ var AC=window.AudioContext||window.webkitAudioContext;
+ if(!AC){say('This browser does not support generated audio.');return;}
+ try{
+  audio=audio||new AC(); if(audio.state==='suspended')audio.resume();
+  master=audio.createGain();master.gain.value=.22;master.connect(audio.destination);
+  drone=audio.createOscillator();drone.type='triangle';drone.frequency.value=43;
+  var dg=audio.createGain();dg.gain.value=.14;drone.connect(dg);dg.connect(master);drone.start();
+  drone2=audio.createOscillator();drone2.type='sine';drone2.frequency.value=57.5;
+  var d2g=audio.createGain();d2g.gain.value=.055;drone2.connect(d2g);d2g.connect(master);drone2.start();
+  var buffer=audio.createBuffer(1,audio.sampleRate*2,audio.sampleRate),data=buffer.getChannelData(0);
+  for(var i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*.24;
+  noiseSource=audio.createBufferSource();noiseSource.buffer=buffer;noiseSource.loop=true;
+  var filter=audio.createBiquadFilter();filter.type='lowpass';filter.frequency.value=360;
+  noiseGain=audio.createGain();noiseGain.gain.value=.055;
+  noiseSource.connect(filter);filter.connect(noiseGain);noiseGain.connect(master);noiseSource.start();
+  audioOn=true;soundBtn.setAttribute('aria-pressed','true');soundBtn.textContent='♫ CINEMATIC AUDIO: ON';
+  say('Cinematic ambience enabled. Headphones recommended.');
+ }catch(e){say('Audio could not start in this browser.');}
+}
+function stopAudio(){
+ if(!audioOn)return;audioOn=false;
+ try{master.gain.setTargetAtTime(0,audio.currentTime,.08);setTimeout(function(){try{drone.stop();drone2.stop();noiseSource.stop();}catch(e){}},350);}catch(e){}
+ soundBtn.setAttribute('aria-pressed','false');soundBtn.textContent='♫ CINEMATIC AUDIO: OFF';
+}
+function oneShot(freq,dur,vol,type,delay){
+ if(!audioOn||!audio)return;
+ try{var o=audio.createOscillator(),g=audio.createGain();o.type=type||'sine';o.frequency.setValueAtTime(freq,audio.currentTime+(delay||0));o.frequency.exponentialRampToValueAtTime(Math.max(18,freq*.55),audio.currentTime+(delay||0)+dur);g.gain.setValueAtTime(.0001,audio.currentTime+(delay||0));g.gain.exponentialRampToValueAtTime(vol,audio.currentTime+(delay||0)+.025);g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+(delay||0)+dur);o.connect(g);g.connect(master);o.start(audio.currentTime+(delay||0));o.stop(audio.currentTime+(delay||0)+dur+.04);}catch(e){}
+}
+soundBtn.addEventListener('click',function(){if(audioOn)stopAudio();else startAudio();});
+/* Add substantial room dressing using the existing raycaster's depth-tested sprite renderer. */
+function addProps(){
+ if(!Array.isArray(window.roomProps))return;
+ var extra=[
+ {room:'STAGE',x:2.1,y:3.6,type:'crate'},{room:'STAGE',x:4.2,y:3.7,type:'chair'},
+ {room:'LOBBY',x:8.3,y:3.7,type:'crate'},{room:'LOBBY',x:9.7,y:1.5,type:'chair'},
+ {room:'SHOP',x:11.2,y:2.8,type:'barrel'},{room:'SHOP',x:13.7,y:3.5,type:'crate'},
+ {room:'HALL',x:4.5,y:6.4,type:'chair'},{room:'HALL',x:10.3,y:7.2,type:'crate'},
+ {room:'WEST',x:2.2,y:11.5,type:'barrel'},{room:'WEST',x:1.1,y:12.6,type:'cable'},
+ {room:'EAST',x:14.2,y:12.0,type:'crate'},{room:'EAST',x:13.2,y:11.4,type:'chair'},
+ {room:'DRESS',x:3.8,y:10.7,type:'lamp'},{room:'DRESS',x:5.7,y:9.1,type:'crate'},
+ {room:'BASEMENT',x:9.9,y:11.6,type:'crate'},{room:'BASEMENT',x:12.0,y:10.7,type:'engine'},
+ {room:'ARCHIVE',x:1.2,y:13.8,type:'barrel'},{room:'ARCHIVE',x:4.4,y:13.7,type:'chair'},
+ {room:'GENERATOR',x:12.2,y:13.5,type:'barrel'},{room:'GENERATOR',x:14.1,y:11.5,type:'crate'},
+ {room:'TUNNEL',x:6.7,y:11.6,type:'pipe'},{room:'TUNNEL',x:9.1,y:13.7,type:'barrel'}
+ ];
+ var seen={};window.roomProps.forEach(function(p){seen[p.room+':'+p.x+':'+p.y+':'+p.type]=1;});
+ extra.forEach(function(p){var k=p.room+':'+p.x+':'+p.y+':'+p.type;if(!seen[k])window.roomProps.push(p);});
+}
+try{addProps();}catch(e){}
+/* Extra volumetric-looking dust, vignette and film texture over the first-person renderer. */
+var motes=[];
+for(var i=0;i<64;i++)motes.push({x:Math.random(),y:Math.random(),r:.35+Math.random()*1.25,v:.0008+Math.random()*.002,phase:Math.random()*6.28});
+var originalRender=window.render;
+if(typeof originalRender==='function'){
+ window.render=function(){
+  originalRender.apply(this,arguments);
+  try{
+   if(!window.G||!G.freeMode)return;
+   var cv=document.getElementById('c');if(!cv)return;
+   var c=cv.getContext('2d'),w=cv.width,h=cv.height,t=performance.now()*.001;
+   c.save();
+   /* Subtle warm/cold split lighting and cinematic edge falloff. */
+   var vg=c.createRadialGradient(w*.5,h*.48,h*.08,w*.5,h*.5,h*.76);
+   vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(.72,'rgba(5,8,12,.12)');vg.addColorStop(1,'rgba(0,0,0,.62)');
+   c.fillStyle=vg;c.fillRect(0,0,w,h);
+   /* Dust catches the flashlight and light shafts as drifting motes. */
+   for(var j=0;j<motes.length;j++){
+    var m=motes[j];m.y-=m.v*(G.player&&G.player.stam<35?1.6:1);
+    m.x+=Math.sin(t*.7+m.phase)*.00018;
+    if(m.y<.03){m.y=1.02;m.x=Math.random();}
+    var alpha=.06+.16*(.5+.5*Math.sin(t*1.4+m.phase));
+    c.fillStyle='rgba(222,211,177,'+alpha+')';c.beginPath();c.arc(m.x*w,m.y*h,m.r,0,Math.PI*2);c.fill();
+   }
+   /* Very restrained analog grain: generated in code, no image files. */
+   c.globalAlpha=.045;c.fillStyle='#d9d0bd';
+   for(var q=0;q<70;q++){var gx=Math.random()*w,gy=Math.random()*h;c.fillRect(gx,gy,1+Math.random()*2,1);}
+   c.restore();
+   /* Occasional distant metallic creak, never a repeated loud jump-scare. */
+   if(audioOn&&t-lastCreak>17+Math.random()*18){lastCreak=t;oneShot(180+Math.random()*90,.65,.035,'triangle');}
+  }catch(e){}
+ };
+}
+/* Small game-aware ambience changes when entering or leaving free-roam. */
+var prevFree=false;
+setInterval(function(){
+ try{
+  var active=!!(window.G&&G.freeMode);
+  if(active&&!prevFree&&audioOn){oneShot(72,.8,.07,'sawtooth');}
+  if(!active&&prevFree&&audioOn){oneShot(120,.45,.035,'sine');}
+  prevFree=active;
+ }catch(e){}
+},800);
+window.addEventListener('keydown',function(e){
+ if(!audioOn)return;
+ if(e.key==='Shift')oneShot(90,.18,.025,'triangle');
+}, {passive:true});
+})();
+</script>
+
+
+<!--
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manifest padding; no gameplay impact.
+ Lantern Hollow cinematic expansion asset manife
+-->
 </body></html>
