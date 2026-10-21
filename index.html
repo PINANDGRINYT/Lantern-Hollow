@@ -1,4 +1,15 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+
+/* Slightly compact the security camera feed and overhead map. */
+.screen.camera-feed-small canvas{width:82%;height:82%}
+.camera-map-panel{width:94%;margin-inline:auto;padding:10px}
+.camera-map-canvas{min-height:215px}
+.cam-map-pin{gap:5px;padding:4px 6px 4px 4px}
+.cam-map-pin b{width:22px;height:22px}
+@media(max-width:560px){
+  .camera-map-panel{width:96%;padding:7px}
+  .camera-map-canvas{min-height:245px}
+}
 </style><title>Hollow Industries™ presents: Lantern Hollow</title></head><body>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -83,6 +94,9 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(24px,4.5vw,32px);m
 .camsel .btn[aria-pressed="true"]:after{color:inherit}
 
 canvas{width:100%;height:100%;display:block;touch-action:manipulation}
+/* Make the live camera picture sit smaller inside the monitor, like a feed inset. */
+.screen.camera-feed-small{display:grid;place-items:center;background:#000}
+.screen.camera-feed-small canvas{width:86%;height:86%;outline:1px solid rgba(145,170,128,.32);box-shadow:0 0 22px rgba(0,0,0,.8)}
 .bar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
 .bar .btn{min-width:0}
 .bar .btn{padding:10px 6px;text-align:center}
@@ -3068,6 +3082,8 @@ function lhOpsSnapshot(){
 
 function render(){
   frame++;
+  var gameScreen=document.querySelector('.screen');
+  if(gameScreen)gameScreen.classList.toggle('camera-feed-small',!!(G&&G.cam&&!G.powerOut&&!G.freeMode&&G.state!=='scare'&&G.state!=='over'));
   ctx.clearRect(0,0,W,H);
   if(!G){return;}
   if(G.state==='scare'||G.state==='over'){drawScare();return;}
