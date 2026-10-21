@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
-</style><title>Lantern Hollow™</title></head><body>
+</style><title>Hollow Industries™ presents: Lantern Hollow</title></head><body>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -211,7 +211,7 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;gap:12px">
-    <div class="fsrow"><button class="btn" type="button" id="gameNightLogBtn">Night Watchman's Log</button><button class="btn" type="button" data-open-controls>Controls &amp; Help</button><button class="btn" id="fsBtn" type="button">Full screen</button></div>
+    <div class="fsrow"><button class="btn" type="button" id="gameNightLogBtn">Night Watchman's Log</button><button class="btn" type="button" data-open-controls>Controls &amp; Help</button><button class="btn" type="button" id="opsDossierBtn">Operations Dossier (F2)</button><button class="btn" type="button" id="opsExportBtn">Export Dossier</button><button class="btn" id="fsBtn" type="button">Full screen</button></div>
     <div class="screen" role="img" aria-label="Lantern Hollow trademark surveillance game display"><canvas id="c" width="960" height="540" aria-label="Game screen"></canvas></div>
     <div class="bar camsel" id="camBar" hidden>
       <button class="btn" data-cam="1">Cam 1</button>
@@ -433,6 +433,7 @@ function mkChars(){
 }
 function newGame(n){
   var L=nightLevels(n);
+  if(typeof lhOpsOnNewGame==='function')lhOpsOnNewGame(n);
   G={night:n,t:0,power:100,doors:{L:false,R:false},dp:{L:0,R:0},lights:{L:false,R:false},
      cam:false,camSel:1,glitch:0,state:'idle',chars:mkChars(),powerOut:false,outT:0,boxT:0,
      scare:null,ended:false,card:0,flick:1,freeMode:false,freeT:0,freeNoClip:false,freeFlashlight:true,freeMonsterAI:false,player:FREE_START(),manualScare:null,freeKeys:{},freeMap:true};
@@ -591,6 +592,7 @@ window.addEventListener('keydown',function(e){
   ['nightLogPanel','controlsPanel','commandPanel'].forEach(function(id){var panel=document.getElementById(id);if(panel)panel.hidden=true;});
   if(typeof LH_FIELD_STATE!=='undefined'){LH_FIELD_STATE.paused=false;LH_FIELD_STATE.journalOpen=false;}
   if(typeof LH_TRACKER!=='undefined')LH_TRACKER.open=false;
+  if(typeof LH_OPS!=='undefined')LH_OPS.open=false;
   G.state='idle';G.ended=true;G.cam=false;G.freeMode=false;G.freeKeys={};G.manualScare=null;
   if(typeof setHum==='function')setHum(false);
   bestText();
@@ -652,6 +654,10 @@ function syncUI(){
 
 function act(a){
   if(!G||G.state!=='play'||G.powerOut)return;
+  if(a==='doorL'&&typeof lhOpsRecordDoor==='function')lhOpsRecordDoor('WEST');
+  if(a==='doorR'&&typeof lhOpsRecordDoor==='function')lhOpsRecordDoor('EAST');
+  if(a==='lightL'&&typeof lhOpsRecordLight==='function')lhOpsRecordLight('WEST');
+  if(a==='lightR'&&typeof lhOpsRecordLight==='function')lhOpsRecordLight('EAST');
   if(a==='cam'){
     G.cam=!G.cam;G.glitch=.25;
     if(typeof lhAddLog==='function')lhAddLog('SECURITY MONITOR',G.cam?'Raised the security monitor.':'Lowered the security monitor.');
@@ -670,6 +676,7 @@ function act(a){
 function pickCam(n){
   if(!G||G.state!=='play'||!G.cam)return;
   var previous=G.camSel;G.camSel=n;G.glitch=.2;sClick();syncUI();
+  if(previous!==n&&typeof lhOpsIncident==='function')lhOpsIncident('CAMERA CHANGED','Switched to Cam '+n+' — '+(CAMNAME[camRoom()]||camRoom())+'.','NOTICE');
   if(previous!==n&&typeof lhAddLog==='function'){var visible=G.chars.filter(function(c){return c.room===camRoom();}).map(function(c){return c.name;});lhAddLog('CAMERA CHANGED','Switched to Cam '+n+' — '+(CAMNAME[camRoom()]||camRoom())+(visible.length?'. Possible sighting: '+visible.join(', ')+'.':'. Feed selected; no hostiles currently visible.'),visible.length?'warning':'');}
 }
 
@@ -2207,6 +2214,7 @@ function lhToggleNightLog(force){
   lhToggleControls(false);
   if(typeof LH_FIELD_STATE!=='undefined')LH_FIELD_STATE.journalOpen=false;
   if(typeof LH_TRACKER!=='undefined')LH_TRACKER.open=false;
+  if(typeof LH_OPS!=='undefined')LH_OPS.open=false;
   if(document.pointerLockElement===cv&&document.exitPointerLock)document.exitPointerLock();
   panel.hidden=false;lhRenderNightLog();document.getElementById('closeNightLog').focus();
  }else panel.hidden=true;
@@ -2311,6 +2319,7 @@ function lhAmbientTick(dt){
  var room=lhCurrentRoom(),events=LH_ROOM_EVENTS[room]||LH_ROOM_EVENTS.HALL;
  LH_AMBIENCE.message=events[Math.floor(Math.random()*events.length)];
  if(typeof lhAddLog==='function')lhAddLog('PARANORMAL EVENT',((roomThemes[room]||{}).name||room)+': '+LH_AMBIENCE.message,'warning');
+ if(typeof lhOpsRecordParanormal==='function')lhOpsRecordParanormal(((roomThemes[room]||{}).name||room)+': '+LH_AMBIENCE.message);
  LH_AMBIENCE.until=G.freeT+4.5;
  if(Math.random()<.35&&typeof tone==='function')tone(90+Math.random()*80,.22,'sine',.035,45);
 }
@@ -2327,6 +2336,689 @@ function lhInvestigationSummary(){
   achievements:LH_ACHIEVEMENTS.filter(function(a){return !!LH_FIELD_STATE.achievements[a.id];}).length,
   room:lhCurrentRoom(),trackerOpen:LH_TRACKER.open};
 }
+
+/* ========================================================================
+   HOLLOW INDUSTRIES // NIGHT OPERATIONS EXPANSION
+   A self-contained add-on: shift objectives, room intelligence, records,
+   session statistics, persistent commendations, and a readable field dossier.
+   Open or close the dossier with F2. This system does not replace the game's
+   original controls, camera logic, monster AI, or Night Watchman's Log.
+   ======================================================================== */
+var LH_OPS_KEY='lanternHollowOperationsV1';
+var LH_OPS={
+ open:false,
+ compact:false,
+ highContrast:false,
+ elapsed:0,
+ sessionId:0,
+ seenRooms:Object.create(null),
+ seenCameras:Object.create(null),
+ incidents:[],
+ achievements:Object.create(null),
+ objectiveIndex:0,
+ objectiveProgress:Object.create(null),
+ lastRoom:'',
+ lastCam:0,
+ lastPower:100,
+ lastMonsterCount:0,
+ lastLogCount:0,
+ lastState:'',
+ toast:'',
+ toastUntil:0,
+ selectedTab:0,
+ showHelp:false,
+ lastSave:0,
+ counters:{
+  cameraSwitches:0,
+  doorUses:0,
+  lightUses:0,
+  powerWarnings:0,
+  roomsVisited:0,
+  freeModeEntries:0,
+  filesFound:0,
+  paranormalEvents:0,
+  monsterEncounters:0,
+  shiftStarts:0,
+  shiftsSurvived:0,
+  nearMisses:0,
+  timesPaused:0,
+  consoleOpens:0,
+  secondsInFreeMode:0,
+  secondsOnCameras:0,
+  secondsInOffice:0,
+  powerUsed:0
+ }
+};
+
+/* Long-term commendations are independent of the existing case-file awards. */
+var LH_OPS_ACHIEVEMENTS=[
+ {id:'ops_first_shift',name:'First Watch',desc:'Start your first shift.',test:function(s){return s.shiftStarts>=1;}},
+ {id:'ops_camera_eye',name:'Camera Operator',desc:'Switch cameras ten times.',test:function(s){return s.cameraSwitches>=10;}},
+ {id:'ops_room_roamer',name:'The Roamer',desc:'Visit five distinct rooms in Free Mode.',test:function(s){return s.roomsVisited>=5;}},
+ {id:'ops_archivist',name:'Junior Archivist',desc:'Collect at least three case files.',test:function(s){return s.filesFound>=3;}},
+ {id:'ops_full_archive',name:'The Whole Story',desc:'Collect every available case file.',test:function(s){return typeof LH_FIELD_FILES!=='undefined'&&lhCountFiles()>=LH_FIELD_FILES.length;}},
+ {id:'ops_long_walk',name:'Long Walk Home',desc:'Spend five minutes exploring in Free Mode.',test:function(s){return s.secondsInFreeMode>=300;}},
+ {id:'ops_survivor',name:'Still Here',desc:'Survive a complete shift.',test:function(s){return s.shiftsSurvived>=1;}},
+ {id:'ops_low_power',name:'Every Watt Counts',desc:'Reach a power warning and keep going.',test:function(s){return s.powerWarnings>=1&&s.shiftsSurvived>=1;}},
+ {id:'ops_paranormal',name:'Something Is Wrong',desc:'Witness three paranormal events.',test:function(s){return s.paranormalEvents>=3;}},
+ {id:'ops_monster',name:'Not Alone',desc:'Record three monster encounters.',test:function(s){return s.monsterEncounters>=3;}},
+ {id:'ops_field_agent',name:'Field Agent',desc:'Enter Free Mode three times.',test:function(s){return s.freeModeEntries>=3;}},
+ {id:'ops_patience',name:'Patient Observer',desc:'Spend one minute watching cameras.',test:function(s){return s.secondsOnCameras>=60;}},
+ {id:'ops_noisy',name:'A Busy Night',desc:'Record ten separate incidents.',test:function(s){return LH_OPS.incidents.length>=10;}},
+ {id:'ops_watchful',name:'Watchful',desc:'Open the operations dossier.',test:function(s){return LH_OPS.open||LH_OPS._openedOnce;}},
+ {id:'ops_ten_shifts',name:'Old Hand',desc:'Start ten shifts over time.',test:function(s){return s.shiftStarts>=10;}}
+];
+
+/* Room intelligence helps players understand where they are exploring. */
+var LH_OPS_ROOM_INTEL={
+ LOBBY:{title:'Front Lobby',risk:'LOW',clue:'Dust patterns suggest someone crossed the floor after closing.',objective:'Inspect the reception desk and the locked entrance.'},
+ STAGE:{title:'Grand Stage',risk:'MEDIUM',clue:'The curtains move even when the ventilation is off.',objective:'Check the wings and the space behind the backdrop.'},
+ HALL:{title:'Main Hall',risk:'HIGH',clue:'Footsteps sometimes echo one beat after your own.',objective:'Keep sightlines open and listen for movement.'},
+ WEST:{title:'West Passage',risk:'HIGH',clue:'The wall lamps dim in a repeating three-beat pattern.',objective:'Look toward the office approach before moving on.'},
+ EAST:{title:'East Passage',risk:'HIGH',clue:'Scratches near the baseboard appear fresh.',objective:'Watch the doorway and avoid lingering in darkness.'},
+ SHOP:{title:'Workshop',risk:'MEDIUM',clue:'Tools have been rearranged into a rough circle.',objective:'Inspect the workbench and shelves.'},
+ DRESS:{title:'Dressing Room',risk:'MEDIUM',clue:'One mirror reflects a doorway that is not behind you.',objective:'Check the mirrors, then turn away slowly.'},
+ BASEMENT:{title:'Basement',risk:'EXTREME',clue:'The air is colder near the floor drain.',objective:'Keep the exit in mind and do not trust distant sounds.'},
+ ARCHIVE:{title:'Prop Archive',risk:'HIGH',clue:'Several labels have been rewritten in unfamiliar handwriting.',objective:'Search the shelves for case-file evidence.'},
+ GENERATOR:{title:'Generator Room',risk:'MEDIUM',clue:'The machine rhythm changes when nobody is nearby.',objective:'Listen for a sudden change in the engine hum.'},
+ TUNNEL:{title:'Service Tunnel',risk:'EXTREME',clue:'Something has dragged its nails along the pipework.',objective:'Move steadily and keep the flashlight ready.'}
+};
+
+/* The incident catalog gives the operations panel readable context. */
+var LH_OPS_INCIDENT_GUIDE=[
+ {type:'CAMERA STATIC',severity:'NOTICE',advice:'Switch to another camera briefly, then return to confirm whether the interference remains.'},
+ {type:'UNEXPECTED MOVEMENT',severity:'WARNING',advice:'Compare adjacent feeds. A missing figure may have moved rather than vanished.'},
+ {type:'POWER WARNING',severity:'WARNING',advice:'Close unused doors and turn off lights when no longer needed.'},
+ {type:'LOW POWER',severity:'CRITICAL',advice:'Use short camera checks. Avoid leaving both lights on.'},
+ {type:'DOOR KNOCK',severity:'WARNING',advice:'Check the matching side carefully before opening the door.'},
+ {type:'PARANORMAL EVENT',severity:'WARNING',advice:'Record the room and the time. Similar events may repeat in the same location.'},
+ {type:'MONSTER ENCOUNTER',severity:'CRITICAL',advice:'Do not assume a creature remains in the last room where it was seen.'},
+ {type:'ROOM ENTERED',severity:'NOTICE',advice:'New rooms can reveal case files, clues, and changing ambience.'},
+ {type:'CASE FILE',severity:'NOTICE',advice:'Read collected evidence in the investigation journal.'},
+ {type:'SHIFT COMPLETE',severity:'SUCCESS',advice:'Review the log for warnings and events that occurred during the shift.'}
+];
+
+/* Optional objective cards can be rotated from the dossier. */
+var LH_OPS_OBJECTIVES=[
+ {id:'obj_watch',title:'Maintain Surveillance',detail:'Use the camera network to check changing rooms.',hint:'SPACE opens the cameras; number keys select feeds.',metric:'cameraSwitches',target:3},
+ {id:'obj_conserve',title:'Conserve the Reserve',detail:'Keep an eye on the office power supply.',hint:'Close doors and switch off lights when safe.',metric:'powerWarnings',target:1},
+ {id:'obj_explore',title:'Walk the Floor',detail:'Visit at least three distinct rooms in Free Mode.',hint:'Use the command console to enter Free Mode.',metric:'roomsVisited',target:3},
+ {id:'obj_evidence',title:'Gather Evidence',detail:'Find case files scattered through the building.',hint:'Approach an evidence point in Free Mode.',metric:'filesFound',target:2},
+ {id:'obj_observe',title:'Observe the Unseen',detail:'Record unusual events without rushing away.',hint:'Paranormal events are logged automatically.',metric:'paranormalEvents',target:2},
+ {id:'obj_track',title:'Track the Threat',detail:'Notice where monsters appear and where they go.',hint:'Open the threat tracker with T in Free Mode.',metric:'monsterEncounters',target:2},
+ {id:'obj_patrol',title:'Patrol the Theater',detail:'Spend a little time exploring each wing.',hint:'The operations dossier remembers rooms visited.',metric:'secondsInFreeMode',target:90},
+ {id:'obj_log',title:'Keep a Record',detail:'Create a useful shift record.',hint:'Open the Night Watchman’s Log from the game controls.',metric:'shiftStarts',target:1}
+];
+
+/* Saved lifetime statistics are deliberately small and versioned. */
+function lhOpsLoad(){
+ try{
+  var raw=localStorage.getItem(LH_OPS_KEY);
+  if(!raw)return;
+  var d=JSON.parse(raw);
+  if(!d||typeof d!=='object')return;
+  if(d.counters&&typeof d.counters==='object'){
+   Object.keys(LH_OPS.counters).forEach(function(k){
+    var v=Number(d.counters[k]);
+    if(Number.isFinite(v)&&v>=0)LH_OPS.counters[k]=v;
+   });
+  }
+  if(d.achievements&&typeof d.achievements==='object')LH_OPS.achievements=d.achievements;
+ }catch(err){/* Private browsing or blocked storage should not stop the game. */}
+}
+function lhOpsSave(){
+ try{
+  localStorage.setItem(LH_OPS_KEY,JSON.stringify({version:1,counters:LH_OPS.counters,achievements:LH_OPS.achievements}));
+ }catch(err){/* Continue with session-only progress if storage is unavailable. */}
+}
+function lhOpsToast(message){
+ LH_OPS.toast=String(message||'');
+ LH_OPS.toastUntil=performance.now()+3600;
+}
+function lhOpsIncident(type,message,severity){
+ var item={
+  type:String(type||'NOTE').toUpperCase(),
+  message:String(message||''),
+  severity:severity||'NOTICE',
+  time:Math.floor(LH_OPS.elapsed),
+  night:G&&G.night?G.night:0,
+  mode:G?(G.freeMode?'FREE MODE':'NIGHT SHIFT'):'MENU',
+  room:G&&G.freeMode?lhCurrentRoom():(G&&G.cam?camRoom():'OFFICE')
+ };
+ LH_OPS.incidents.unshift(item);
+ if(LH_OPS.incidents.length>80)LH_OPS.incidents.length=80;
+ if(typeof lhOpsRenderDossier==='function'&&LH_OPS.open)lhOpsRenderDossier();
+}
+function lhOpsAward(id){
+ if(LH_OPS.achievements[id])return;
+ var a=LH_OPS_ACHIEVEMENTS.find(function(x){return x.id===id;});
+ if(!a)return;
+ LH_OPS.achievements[id]=true;
+ lhOpsSave();
+ lhOpsToast('COMMENDATION: '+a.name);
+ lhOpsIncident('COMMENDATION UNLOCKED',a.name+' — '+a.desc,'SUCCESS');
+ if(typeof lhAddLog==='function')lhAddLog('COMMENDATION',a.name+' — '+a.desc,'positive');
+}
+function lhOpsCheckAchievements(){
+ LH_OPS_ACHIEVEMENTS.forEach(function(a){
+  if(LH_OPS.achievements[a.id])return;
+  try{if(a.test(LH_OPS.counters))lhOpsAward(a.id);}catch(err){/* A single optional achievement cannot break play. */}
+ });
+}
+function lhOpsRoomKey(){
+ if(!G||!G.freeMode||!G.player)return '';
+ try{return roomAt(G.player.x,G.player.y)||'HALL';}catch(err){return 'HALL';}
+}
+function lhOpsVisitRoom(room){
+ if(!room||LH_OPS.seenRooms[room])return;
+ LH_OPS.seenRooms[room]=true;
+ LH_OPS.counters.roomsVisited++;
+ var info=LH_OPS_ROOM_INTEL[room];
+ lhOpsIncident('ROOM DISCOVERED',(info?info.title:room)+' entered. '+(info?info.clue:''),'NOTICE');
+ lhOpsCheckAchievements();
+ lhOpsSave();
+}
+function lhOpsVisitCamera(cam){
+ if(!cam||LH_OPS.seenCameras[cam])return;
+ LH_OPS.seenCameras[cam]=true;
+ lhOpsIncident('CAMERA INDEXED','Camera '+cam+' added to this session’s observation record.','NOTICE');
+}
+function lhOpsUpdate(dt){
+ if(!G||$('#game').hidden)return;
+ var active=G.state==='play';
+ if(active&&!LH_OPS._wasActive){
+  LH_OPS.counters.shiftStarts++;
+  lhOpsIncident('SHIFT START','Night '+G.night+' watch began.','NOTICE');
+  lhOpsCheckAchievements();
+  lhOpsSave();
+ }
+ LH_OPS._wasActive=active;
+ if(active){
+  LH_OPS.elapsed+=dt;
+  if(G.freeMode)LH_OPS.counters.secondsInFreeMode+=dt;
+  else if(G.cam)LH_OPS.counters.secondsOnCameras+=dt;
+  else LH_OPS.counters.secondsInOffice+=dt;
+  if(G.cam&&G.camSel!==LH_OPS.lastCam){
+   if(LH_OPS.lastCam)LH_OPS.counters.cameraSwitches++;
+   LH_OPS.lastCam=G.camSel;
+   lhOpsVisitCamera(G.camSel);
+  }
+  if(G.freeMode){
+   var room=lhOpsRoomKey();
+   if(room&&room!==LH_OPS.lastRoom){LH_OPS.lastRoom=room;lhOpsVisitRoom(room);}
+  }
+  if(G.power<LH_OPS.lastPower&& !G.freeMode)LH_OPS.counters.powerUsed+=LH_OPS.lastPower-G.power;
+  if(G.power<=50&&LH_OPS.lastPower>50){LH_OPS.counters.powerWarnings++;lhOpsIncident('POWER WARNING','Reserve has fallen below 50%.','WARNING');}
+  if(G.power<=25&&LH_OPS.lastPower>25)lhOpsIncident('CRITICAL POWER','Reserve has fallen below 25%.','CRITICAL');
+  LH_OPS.lastPower=G.power;
+  var monsters=G.chars?G.chars.filter(function(c){return c&&c.lvl>0;}).length:0;
+  if(monsters>LH_OPS.lastMonsterCount){
+   LH_OPS.counters.monsterEncounters++;
+   lhOpsIncident('MONSTER ACTIVITY','Hostile activity increased. Check recent sightings.','WARNING');
+  }
+  LH_OPS.lastMonsterCount=monsters;
+  if(typeof LH_FIELD_STATE!=='undefined')LH_OPS.counters.filesFound=lhCountFiles();
+  if(LH_OPS.elapsed-LH_OPS.lastSave>12){LH_OPS.lastSave=LH_OPS.elapsed;lhOpsCheckAchievements();lhOpsSave();}
+ }
+ if(G.state==='won'&&LH_OPS.lastState!=='won'){
+  LH_OPS.counters.shiftsSurvived++;
+  lhOpsIncident('SHIFT COMPLETE','Night '+G.night+' completed.','SUCCESS');
+  lhOpsCheckAchievements();lhOpsSave();
+ }
+ LH_OPS.lastState=G.state;
+}
+function lhOpsFormatTime(seconds){
+ seconds=Math.max(0,Math.floor(seconds||0));
+ var m=Math.floor(seconds/60),s=seconds%60;
+ return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+}
+function lhOpsRiskColor(risk){
+ if(risk==='EXTREME')return '#ff766a';
+ if(risk==='HIGH')return '#f0b66d';
+ if(risk==='MEDIUM')return '#e4d08b';
+ return '#9bc79b';
+}
+function lhOpsMetricValue(metric){
+ var v=LH_OPS.counters[metric];
+ return Number.isFinite(v)?v:0;
+}
+function lhOpsCurrentObjective(){
+ var start=LH_OPS.objectiveIndex%LH_OPS_OBJECTIVES.length;
+ return LH_OPS_OBJECTIVES[start];
+}
+function lhOpsObjectiveProgress(obj){
+ var value=lhOpsMetricValue(obj.metric);
+ return Math.max(0,Math.min(1,value/obj.target));
+}
+function lhOpsNextObjective(){
+ LH_OPS.objectiveIndex=(LH_OPS.objectiveIndex+1)%LH_OPS_OBJECTIVES.length;
+ lhOpsToast('OBJECTIVE SELECTED: '+lhOpsCurrentObjective().title);
+}
+function lhOpsExport(){
+ var rows=[];
+ rows.push('HOLLOW INDUSTRIES — LANTERN HOLLOW OPERATIONS DOSSIER');
+ rows.push('Generated: '+new Date().toLocaleString());
+ rows.push('');
+ rows.push('LIFETIME STATISTICS');
+ Object.keys(LH_OPS.counters).forEach(function(k){rows.push(k.replace(/([A-Z])/g,' $1').toUpperCase()+': '+LH_OPS.counters[k]);});
+ rows.push('');
+ rows.push('COMMENDATIONS');
+ LH_OPS_ACHIEVEMENTS.forEach(function(a){rows.push((LH_OPS.achievements[a.id]?'[UNLOCKED] ':'[LOCKED] ')+a.name+' — '+a.desc);});
+ rows.push('');
+ rows.push('RECENT INCIDENTS');
+ LH_OPS.incidents.slice(0,60).forEach(function(e){rows.push('['+lhOpsFormatTime(e.time)+'] ['+e.severity+'] '+e.type+' — '+e.message+' ('+e.room+')');});
+ var blob=new Blob([rows.join('\n')],{type:'text/plain;charset=utf-8'});
+ var url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='Lantern-Hollow-Operations-Dossier.txt';document.body.appendChild(a);a.click();a.remove();
+ setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+function lhOpsDrawBar(x,y,w,h,ratio,color){
+ ctx.fillStyle='rgba(255,255,255,.10)';ctx.fillRect(x,y,w,h);
+ ctx.fillStyle=color;ctx.fillRect(x,y,w*Math.max(0,Math.min(1,ratio)),h);
+ ctx.strokeStyle='rgba(255,255,255,.24)';ctx.strokeRect(x,y,w,h);
+}
+function lhOpsDrawPanel(){
+ if(!LH_OPS.open||!G||$('#game').hidden)return;
+ var pw=Math.min(760,W-36),ph=Math.min(460,H-36),px=(W-pw)/2,py=(H-ph)/2;
+ ctx.save();
+ ctx.fillStyle='rgba(0,0,0,.82)';ctx.fillRect(0,0,W,H);
+ ctx.fillStyle=LH_OPS.highContrast?'#050505':'#101014';ctx.fillRect(px,py,pw,ph);
+ ctx.strokeStyle='#b18b53';ctx.lineWidth=2;ctx.strokeRect(px,py,pw,ph);
+ ctx.fillStyle='#b18b53';ctx.fillRect(px,py,pw,38);
+ ctx.fillStyle='#17130d';ctx.textAlign='left';ctx.font='bold 16px monospace';
+ ctx.fillText('HOLLOW INDUSTRIES // OPERATIONS DOSSIER',px+16,py+25);
+ ctx.textAlign='right';ctx.font='11px monospace';ctx.fillText('F2 CLOSE',px+pw-14,py+24);
+ var tabs=['OVERVIEW','OBJECTIVE','ROOM INTEL','COMMENDATIONS','INCIDENTS'];
+ var tabW=(pw-24)/tabs.length;
+ tabs.forEach(function(t,i){
+  var tx=px+12+i*tabW;
+  ctx.fillStyle=LH_OPS.selectedTab===i?'rgba(177,139,83,.32)':'rgba(255,255,255,.04)';ctx.fillRect(tx,py+48,tabW-4,27);
+  ctx.strokeStyle=LH_OPS.selectedTab===i?'#b18b53':'#514b41';ctx.strokeRect(tx,py+48,tabW-4,27);
+  ctx.fillStyle='#ead9b9';ctx.textAlign='center';ctx.font='10px monospace';ctx.fillText(t,tx+(tabW-4)/2,py+65);
+ });
+ var left=px+18,top=py+98,usable=pw-36;
+ ctx.textAlign='left';ctx.textBaseline='alphabetic';
+ if(LH_OPS.selectedTab===0){
+  ctx.fillStyle='#e7d7bb';ctx.font='bold 14px monospace';ctx.fillText('SHIFT STATUS',left,top);
+  var stat=[['CURRENT NIGHT',G.night+' / '+NIGHTS],['MODE',G.freeMode?'FREE MODE':(G.cam?'CAMERA MONITOR':'OFFICE')],['SESSION TIME',lhOpsFormatTime(LH_OPS.elapsed)],['ROOMS DISCOVERED',LH_OPS.counters.roomsVisited],['CAMERAS INDEXED',Object.keys(LH_OPS.seenCameras).length],['CASE FILES',typeof lhCountFiles==='function'?lhCountFiles()+'/'+LH_FIELD_FILES.length:'—']];
+  stat.forEach(function(s,i){var col=i%2,row=Math.floor(i/2),sx=left+col*(usable/2),sy=top+34+row*51;
+   ctx.fillStyle='#8f887a';ctx.font='10px monospace';ctx.fillText(s[0],sx,sy);
+   ctx.fillStyle='#f0dfbf';ctx.font='bold 17px monospace';ctx.fillText(String(s[1]),sx,sy+22);
+  });
+  ctx.fillStyle='#b18b53';ctx.font='bold 12px monospace';ctx.fillText('LIFETIME COMMENDATIONS',left,top+208);
+  var unlocked=LH_OPS_ACHIEVEMENTS.filter(function(a){return !!LH_OPS.achievements[a.id];}).length;
+  lhOpsDrawBar(left,top+220,usable,9,unlocked/LH_OPS_ACHIEVEMENTS.length,'#b18b53');
+  ctx.fillStyle='#bfb5a1';ctx.font='11px monospace';ctx.fillText(unlocked+' / '+LH_OPS_ACHIEVEMENTS.length+' unlocked',left,top+246);
+  ctx.fillStyle='#928979';ctx.fillText('Press Z to return to the main menu. F2 closes this dossier.',left,py+ph-17);
+ }else if(LH_OPS.selectedTab===1){
+  var obj=lhOpsCurrentObjective(),prog=lhOpsObjectiveProgress(obj);
+  ctx.fillStyle='#b18b53';ctx.font='bold 11px monospace';ctx.fillText('OPTIONAL FIELD OBJECTIVE '+(LH_OPS.objectiveIndex+1)+' / '+LH_OPS_OBJECTIVES.length,left,top);
+  ctx.fillStyle='#f2dfbd';ctx.font='bold 20px monospace';ctx.fillText(obj.title,left,top+34);
+  ctx.fillStyle='#b9b0a1';ctx.font='13px monospace';ctx.fillText(obj.detail,left,top+61);
+  ctx.fillStyle='#d9c7a5';ctx.font='12px monospace';ctx.fillText('GUIDANCE: '+obj.hint,left,top+94);
+  lhOpsDrawBar(left,top+119,usable,13,prog,prog>=1?'#8bbd8a':'#b18b53');
+  ctx.fillStyle='#e9d7b7';ctx.font='12px monospace';ctx.fillText(Math.min(obj.target,lhOpsMetricValue(obj.metric))+' / '+obj.target+' progress',left,top+151);
+  ctx.fillStyle='#928979';ctx.fillText('Press TAB to cycle optional objectives.',left,py+ph-17);
+ }else if(LH_OPS.selectedTab===2){
+  var r=lhOpsRoomKey()||'LOBBY',info=LH_OPS_ROOM_INTEL[r]||LH_OPS_ROOM_INTEL.HALL;
+  ctx.fillStyle='#b18b53';ctx.font='bold 11px monospace';ctx.fillText('CURRENT LOCATION',left,top);
+  ctx.fillStyle='#f2dfbd';ctx.font='bold 20px monospace';ctx.fillText(info.title,left,top+33);
+  ctx.fillStyle=lhOpsRiskColor(info.risk);ctx.font='bold 12px monospace';ctx.fillText('RISK CLASS: '+info.risk,left,top+58);
+  ctx.fillStyle='#b9b0a1';ctx.font='13px monospace';ctx.fillText('OBSERVATION',left,top+91);
+  lhOpsWrap(info.clue,left,top+114,usable,17,ctx);
+  ctx.fillStyle='#b9b0a1';ctx.fillText('FIELD GUIDANCE',left,top+177);
+  lhOpsWrap(info.objective,left,top+200,usable,17,ctx);
+  var discovered=Object.keys(LH_OPS.seenRooms).length;
+  ctx.fillStyle='#928979';ctx.fillText('Rooms discovered: '+discovered+' / '+Object.keys(LH_OPS_ROOM_INTEL).length,left,py+ph-17);
+ }else if(LH_OPS.selectedTab===3){
+  var ach=LH_OPS_ACHIEVEMENTS;
+  for(var ai=0;ai<Math.min(6,ach.length);ai++){
+   var a=ach[ai+LH_OPS._achPage*6]||ach[ai];if(!a)continue;
+   var ay=top+ai*49;
+   ctx.fillStyle=LH_OPS.achievements[a.id]?'#9bc79b':'#706a5f';ctx.font='bold 12px monospace';ctx.fillText((LH_OPS.achievements[a.id]?'✓ ':'□ ')+a.name,left,ay+4);
+   ctx.fillStyle='#b9b0a1';ctx.font='11px monospace';ctx.fillText(a.desc,left+20,ay+22);
+  }
+  ctx.fillStyle='#928979';ctx.fillText('Press TAB to cycle objectives; achievement progress saves automatically.',left,py+ph-17);
+ }else{
+  var events=LH_OPS.incidents.slice(0,7);
+  if(!events.length){ctx.fillStyle='#b9b0a1';ctx.font='13px monospace';ctx.fillText('No incidents recorded yet. Begin a shift or explore.',left,top+20);}
+  events.forEach(function(ev,i){
+   var ey=top+i*43;
+   ctx.fillStyle=ev.severity==='CRITICAL'?'#ff766a':(ev.severity==='SUCCESS'?'#9bc79b':'#d8bd8b');ctx.font='bold 10px monospace';ctx.fillText('['+lhOpsFormatTime(ev.time)+'] '+ev.type,left,ey);
+   ctx.fillStyle='#c4baaa';ctx.font='11px monospace';ctx.fillText(ev.message.slice(0,Math.floor(usable/7)),left+8,ey+17);
+  });
+  ctx.fillStyle='#928979';ctx.fillText('Export the full dossier from the Operations button in this panel.',left,py+ph-17);
+ }
+ ctx.restore();
+}
+function lhOpsWrap(textValue,x,y,maxWidth,lineHeight,context){
+ var words=String(textValue||'').split(/\s+/),line='';
+ words.forEach(function(word){
+  var test=line?line+' '+word:word;
+  if(context.measureText(test).width>maxWidth&&line){context.fillText(line,x,y);line=word;y+=lineHeight;}
+  else line=test;
+ });
+ if(line)context.fillText(line,x,y);
+}
+function lhOpsRenderDossier(){
+ /* The dossier is canvas-rendered so it scales with the existing game canvas. */
+ LH_OPS._dirty=false;
+}
+function lhOpsOpen(){
+ LH_OPS.open=true;LH_OPS._openedOnce=true;LH_OPS.selectedTab=0;
+ if(G&&G.freeMode)G.freeKeys={};
+ lhOpsCheckAchievements();
+}
+function lhOpsClose(){LH_OPS.open=false;}
+function lhOpsToggle(){if(LH_OPS.open)lhOpsClose();else lhOpsOpen();}
+function lhOpsKey(e){
+ if(!G||$('#game').hidden)return false;
+ if(e.key==='F2'){
+  e.preventDefault();lhOpsToggle();return true;
+ }
+ if(!LH_OPS.open)return false;
+ if(e.key==='Escape'||e.key==='F2'){e.preventDefault();lhOpsClose();return true;}
+ if(e.key==='Tab'){
+  e.preventDefault();lhOpsNextObjective();return true;
+ }
+ if(e.key==='ArrowRight'){
+  e.preventDefault();LH_OPS.selectedTab=(LH_OPS.selectedTab+1)%5;return true;
+ }
+ if(e.key==='ArrowLeft'){
+  e.preventDefault();LH_OPS.selectedTab=(LH_OPS.selectedTab+4)%5;return true;
+ }
+ if(e.key==='e'||e.key==='E'){
+  if(LH_OPS.selectedTab===4){lhOpsExport();e.preventDefault();return true;}
+ }
+ return true;
+}
+window.addEventListener('keydown',function(e){
+ if(lhOpsKey(e)){e.stopImmediatePropagation();return;}
+},true);
+
+/* Session reset runs when a fresh game state is created, not on every frame. */
+function lhOpsOnNewGame(n){
+ LH_OPS.open=false;
+ LH_OPS.sessionId++;
+ LH_OPS.elapsed=0;
+ LH_OPS.seenRooms=Object.create(null);
+ LH_OPS.seenCameras=Object.create(null);
+ LH_OPS.incidents=[];
+ LH_OPS.lastRoom='';LH_OPS.lastCam=0;LH_OPS.lastPower=100;LH_OPS.lastMonsterCount=0;
+ LH_OPS.lastState='';LH_OPS._wasActive=false;LH_OPS._achPage=0;
+ lhOpsIncident('NEW SESSION','Prepared for Night '+n+'.','NOTICE');
+}
+
+/* Keep the small operational overlay readable on all supported canvas sizes. */
+function lhOpsDrawToast(){
+ if(!LH_OPS.toast||performance.now()>LH_OPS.toastUntil||!G||$('#game').hidden)return;
+ ctx.save();ctx.textAlign='center';ctx.font='bold 12px monospace';
+ var tw=Math.min(W-30,ctx.measureText(LH_OPS.toast).width+34),tx=(W-tw)/2,ty=H-68;
+ ctx.fillStyle='rgba(10,9,8,.9)';ctx.fillRect(tx,ty,tw,31);
+ ctx.strokeStyle='#b18b53';ctx.strokeRect(tx,ty,tw,31);
+ ctx.fillStyle='#f0d7a3';ctx.fillText(LH_OPS.toast,W/2,ty+20);ctx.restore();
+}
+function lhOpsDrawObjectiveChip(){
+ if(!G||$('#game').hidden||LH_OPS.open)return;
+ var obj=lhOpsCurrentObjective(),progress=lhOpsObjectiveProgress(obj);
+ ctx.save();ctx.textAlign='left';ctx.font='10px monospace';
+ var x=18,y=H-48,w=Math.min(330,W-36);
+ ctx.fillStyle='rgba(5,5,7,.68)';ctx.fillRect(x,y,w,30);
+ ctx.strokeStyle='rgba(177,139,83,.65)';ctx.strokeRect(x,y,w,30);
+ ctx.fillStyle='#d0b782';ctx.fillText('OPTIONAL: '+obj.title.toUpperCase(),x+8,y+12);
+ ctx.fillStyle='#a39a8a';ctx.fillText('F2 DOSSIER  ·  '+Math.round(progress*100)+'%',x+8,y+24);
+ ctx.restore();
+}
+function lhOpsDrawAll(){
+ lhOpsDrawObjectiveChip();
+ lhOpsDrawToast();
+ lhOpsDrawPanel();
+}
+
+/* A compact set of evidence interpretation notes for the dossier. */
+var LH_OPS_EVIDENCE_NOTES=[
+ 'Unexplained cold spots often appear near basement entrances.',
+ 'Camera interference may hide movement, but it is not proof of absence.',
+ 'Repeated knocks can indicate that a creature has reached a doorway.',
+ 'The theater archive contains records that contradict official closure dates.',
+ 'The generator rhythm changes before some lighting failures.',
+ 'Mirrors in the dressing room can show movement from an adjacent space.',
+ 'Dust disturbance is more reliable than a single flickering frame.',
+ 'A silent room is not necessarily an empty room.',
+ 'Some footsteps repeat with a slight delay, as if an echo is walking.',
+ 'The service tunnel has poor visibility and limited retreat options.',
+ 'The workshop inventory changes between inspections.',
+ 'Stage curtains may conceal the edge of a doorway.',
+ 'The lobby desk contains old shift schedules and visitor slips.',
+ 'A room name in the archive may not match the modern signage.',
+ 'Keep the time and camera number with every observation.',
+ 'Do not treat a static silhouette as a confirmed monster identity.',
+ 'A short observation repeated later is more useful than a guess.',
+ 'When a light fails, compare the room with an adjacent camera.',
+ 'The safest route may change as threats move between rooms.',
+ 'The official incident log should be checked after every shift.'
+];
+
+/* Detailed location notes are exposed for future journal integrations. */
+function lhOpsEvidenceNote(index){
+ if(!LH_OPS_EVIDENCE_NOTES.length)return '';
+ var i=((Math.floor(index)||0)%LH_OPS_EVIDENCE_NOTES.length+LH_OPS_EVIDENCE_NOTES.length)%LH_OPS_EVIDENCE_NOTES.length;
+ return LH_OPS_EVIDENCE_NOTES[i];
+}
+function lhOpsRoomReport(room){
+ var key=room||lhOpsRoomKey()||'HALL';
+ var info=LH_OPS_ROOM_INTEL[key]||LH_OPS_ROOM_INTEL.HALL;
+ return {
+  room:key,
+  name:info.title,
+  risk:info.risk,
+  clue:info.clue,
+  objective:info.objective,
+  visited:!!LH_OPS.seenRooms[key],
+  timestamp:LH_OPS.elapsed
+ };
+}
+function lhOpsGetReport(){
+ return {
+  version:1,
+  game:'Lantern Hollow',
+  studio:'Hollow Industries',
+  night:G&&G.night||null,
+  mode:G?(G.freeMode?'FREE MODE':'NIGHT SHIFT'):'MENU',
+  currentRoom:lhOpsRoomReport(),
+  counters:Object.assign({},LH_OPS.counters),
+  achievements:LH_OPS_ACHIEVEMENTS.filter(function(a){return !!LH_OPS.achievements[a.id];}).map(function(a){return a.name;}),
+  recentIncidents:LH_OPS.incidents.slice(0,20)
+ };
+}
+
+/* Accessibility toggles are intentionally local to this panel. */
+function lhOpsToggleContrast(){
+ LH_OPS.highContrast=!LH_OPS.highContrast;
+ lhOpsToast('HIGH CONTRAST '+(LH_OPS.highContrast?'ON':'OFF'));
+}
+function lhOpsToggleCompact(){
+ LH_OPS.compact=!LH_OPS.compact;
+ lhOpsToast('COMPACT HUD '+(LH_OPS.compact?'ON':'OFF'));
+}
+function lhOpsApplyAction(action){
+ if(action==='export'){lhOpsExport();return true;}
+ if(action==='objective'){lhOpsNextObjective();return true;}
+ if(action==='contrast'){lhOpsToggleContrast();return true;}
+ if(action==='compact'){lhOpsToggleCompact();return true;}
+ if(action==='clear'){
+  if(window.confirm('Clear the recent operations incident list?'))LH_OPS.incidents=[];
+  return true;
+ }
+ return false;
+}
+
+/* Developer-facing summary, also useful for save-game diagnostics. */
+function lhOpsDiagnostics(){
+ return {
+  saved:!!function(){try{return localStorage.getItem(LH_OPS_KEY);}catch(e){return false;}}(),
+  incidents:LH_OPS.incidents.length,
+  commendations:LH_OPS_ACHIEVEMENTS.filter(function(a){return !!LH_OPS.achievements[a.id];}).length,
+  discoveredRooms:Object.keys(LH_OPS.seenRooms).length,
+  indexedCameras:Object.keys(LH_OPS.seenCameras).length,
+  sessionSeconds:Math.floor(LH_OPS.elapsed),
+  currentObjective:lhOpsCurrentObjective().id
+ };
+}
+
+/* Small glossary used by investigation-focused players. */
+var LH_OPS_GLOSSARY=[
+ ['ANOMALY','A visual, audio, or environmental change that does not fit the room.'],
+ ['CAMERA LOOP','A repeated image or motion pattern that may be misleading.'],
+ ['COLD SPOT','A sudden localized temperature drop associated with some events.'],
+ ['EVIDENCE','A collected record, object, or observation that supports a theory.'],
+ ['FIELD DOSSIER','The F2 panel containing objectives, room notes, and commendations.'],
+ ['FREE MODE','First-person exploration mode for investigating the theater.'],
+ ['INCIDENT','A notable event recorded by the operations expansion.'],
+ ['NIGHT SHIFT','The standard survival mode with limited power and hostile movement.'],
+ ['PARANORMAL EVENT','An unexplained event, sound, flicker, or environmental disturbance.'],
+ ['RISK CLASS','A descriptive guide to the relative danger of a room.'],
+ ['SHIFT RECORD','A time-stamped note about activity during a play session.'],
+ ['THREAT TRACKER','The existing panel used to monitor monster sightings in Free Mode.'],
+ ['COMMENDATION','A persistent achievement earned by completing a milestone.'],
+ ['POWER RESERVE','The office energy supply consumed by doors, lights, and cameras.'],
+ ['ROOM INTELLIGENCE','A short description and field guidance for known locations.']
+];
+function lhOpsFindGlossary(term){
+ var q=String(term||'').toLowerCase();
+ return LH_OPS_GLOSSARY.filter(function(pair){return pair[0].toLowerCase().indexOf(q)>=0||pair[1].toLowerCase().indexOf(q)>=0;});
+}
+
+/* Objective catalog entries include enough guidance to remain useful without
+   forcing the player into a single route or making survival easier by cheating. */
+var LH_OPS_OBJECTIVE_GUIDANCE={
+ obj_watch:['Check more than one feed before deciding a room is clear.','A figure disappearing from view may have moved off-camera.','Recheck the feed after a brief pause.'],
+ obj_conserve:['Close a door when its immediate threat has passed.','Lights are useful for short checks, not permanent illumination.','The monitor also contributes to power use.'],
+ obj_explore:['Use the room map to plan a route through the building.','The minimap can help you recognize corridors and junctions.','Return to the lobby if you need to reorient yourself.'],
+ obj_evidence:['Walk close to an evidence marker to inspect it.','Collected files are available through the investigation journal.','Read a file for context before moving to another room.'],
+ obj_observe:['Wait for the environment to change before leaving a room.','Ambient messages can identify a location-specific anomaly.','Record the room where an event occurred.'],
+ obj_track:['Use the threat tracker to review recent monster sightings.','Do not assume the last seen location is the current location.','Keep an exit route in mind when a threat is close.'],
+ obj_patrol:['Explore at a steady pace and look into side rooms.','The dossier remembers each distinct room visited.','Pause safely if you need to review a clue.'],
+ obj_log:['The logbook is accessible from the game control row.','Export records if you want a copy outside the browser.','Threat and power filters help narrow a long report.']
+};
+function lhOpsGuidanceForObjective(id){
+ var list=LH_OPS_OBJECTIVE_GUIDANCE[id]||[];
+ return list.slice();
+}
+
+/* Session event hooks use delegated game actions and leave original handlers in place. */
+function lhOpsRecordDoor(side){
+ LH_OPS.counters.doorUses++;
+ lhOpsIncident('DOOR CONTROL',String(side||'UNKNOWN')+' door control used.','NOTICE');
+}
+function lhOpsRecordLight(side){
+ LH_OPS.counters.lightUses++;
+ lhOpsIncident('LIGHT CONTROL',String(side||'UNKNOWN')+' light control used.','NOTICE');
+}
+function lhOpsRecordParanormal(message){
+ LH_OPS.counters.paranormalEvents++;
+ lhOpsIncident('PARANORMAL EVENT',message||'An unexplained event was observed.','WARNING');
+ lhOpsCheckAchievements();
+}
+function lhOpsRecordNearMiss(message){
+ LH_OPS.counters.nearMisses++;
+ lhOpsIncident('NEAR MISS',message||'A threat passed nearby.','WARNING');
+}
+function lhOpsRecordConsole(){
+ LH_OPS.counters.consoleOpens++;
+ lhOpsIncident('CONSOLE OPENED','Administrative command console opened.','NOTICE');
+}
+function lhOpsMarkFileFound(){
+ LH_OPS.counters.filesFound=typeof lhCountFiles==='function'?lhCountFiles():LH_OPS.counters.filesFound+1;
+ lhOpsIncident('EVIDENCE COLLECTED','A case file was added to the investigation.','SUCCESS');
+ lhOpsCheckAchievements();
+}
+
+/* Diagnostics and state are loaded before the animation loop starts. */
+lhOpsLoad();
+LH_OPS._openedOnce=false;
+LH_OPS._achPage=0;
+LH_OPS._dirty=true;
+LH_OPS._wasActive=false;
+var lhOpsButton=document.getElementById('opsDossierBtn');
+var lhOpsExportButton=document.getElementById('opsExportBtn');
+if(lhOpsButton)lhOpsButton.addEventListener('click',lhOpsToggle);
+if(lhOpsExportButton)lhOpsExportButton.addEventListener('click',lhOpsExport);
+
+/* Room intelligence directory, second pass: field-safe short names. */
+var LH_OPS_ROOM_CODES={
+ LOBBY:'L-01',STAGE:'S-02',HALL:'H-03',WEST:'W-04',EAST:'E-05',
+ SHOP:'W-06',DRESS:'D-07',BASEMENT:'B-08',ARCHIVE:'A-09',
+ GENERATOR:'G-10',TUNNEL:'T-11'
+};
+function lhOpsRoomCode(room){return LH_OPS_ROOM_CODES[room]||'U-00';}
+function lhOpsRoomVisitedList(){
+ return Object.keys(LH_OPS_ROOM_INTEL).map(function(key){
+  var r=LH_OPS_ROOM_INTEL[key];
+  return {code:lhOpsRoomCode(key),id:key,name:r.title,risk:r.risk,visited:!!LH_OPS.seenRooms[key]};
+ });
+}
+
+/* Simple quality-of-life helpers for future feature growth. */
+function lhOpsSafeText(value,max){
+ var textValue=String(value==null?'':value).replace(/[<>]/g,'');
+ return textValue.slice(0,max||180);
+}
+function lhOpsStatLabel(key){
+ return String(key||'').replace(/([A-Z])/g,' $1').replace(/^./,function(c){return c.toUpperCase();});
+}
+function lhOpsPercent(value,max){
+ return max>0?Math.round(Math.max(0,Math.min(1,value/max))*100):0;
+}
+function lhOpsSummaryText(){
+ var s=LH_OPS.counters;
+ return 'Shifts: '+s.shiftStarts+' | Cameras: '+s.cameraSwitches+' | Rooms: '+s.roomsVisited+' | Evidence: '+s.filesFound+' | Events: '+s.paranormalEvents;
+}
+function lhOpsRecentIncident(){return LH_OPS.incidents.length?LH_OPS.incidents[0]:null;}
+function lhOpsClearSession(){
+ LH_OPS.incidents=[];LH_OPS.elapsed=0;LH_OPS.seenRooms=Object.create(null);LH_OPS.seenCameras=Object.create(null);
+ LH_OPS.lastRoom='';LH_OPS.lastCam=0;LH_OPS.lastPower=G?G.power:100;
+ lhOpsToast('SESSION NOTES CLEARED');
+}
+
+/* Feature reference: keyboard shortcuts. */
+var LH_OPS_SHORTCUTS=[
+ {key:'F2',action:'Open or close the Operations Dossier.'},
+ {key:'TAB',action:'Cycle the selected optional field objective.'},
+ {key:'LEFT / RIGHT',action:'Switch dossier tabs.'},
+ {key:'E',action:'Export while the Incidents tab is selected.'},
+ {key:'Z',action:'Return to the main menu using the game shortcut.'},
+ {key:'F1',action:'Open the Controls & Help panel.'},
+ {key:'J',action:'Open the investigation journal in Free Mode.'},
+ {key:'T',action:'Toggle the threat tracker in Free Mode.'},
+ {key:'P',action:'Pause or resume Free Mode.'},
+ {key:'M',action:'Toggle the Free Mode minimap.'},
+ {key:'L',action:'Toggle the Free Mode flashlight.'},
+ {key:'N',action:'Toggle noclip in Free Mode.'},
+ {key:'F',action:'Exit Free Mode.'},
+ {key:'CTRL+C',action:'Open or close the command console.'}
+];
+function lhOpsShortcutSearch(key){
+ var k=String(key||'').toLowerCase();
+ return LH_OPS_SHORTCUTS.filter(function(item){return item.key.toLowerCase().indexOf(k)>=0||item.action.toLowerCase().indexOf(k)>=0;});
+}
+
+/* Mission and room data are exposed as plain objects to simplify later saves. */
+function lhOpsSnapshot(){
+ return {
+  version:1,
+  objective:lhOpsCurrentObjective().id,
+  objectiveIndex:LH_OPS.objectiveIndex,
+  selectedTab:LH_OPS.selectedTab,
+  seenRooms:Object.keys(LH_OPS.seenRooms),
+  seenCameras:Object.keys(LH_OPS.seenCameras).map(Number),
+  counters:Object.assign({},LH_OPS.counters),
+  achievements:Object.assign({},LH_OPS.achievements),
+  incidents:LH_OPS.incidents.slice(0,80)
+ };
+}
+
+/* Final integration is performed in the main animation loop below. */
 
 function render(){
   frame++;
@@ -2348,6 +3040,7 @@ function loop(ts){
   var dt=Math.min(.05,((ts-last)/1000)||0);last=ts;
   var logPanel=document.getElementById('nightLogPanel'),nightLogOpen=!!(logPanel&&!logPanel.hidden);
   if(G){
+    if(!nightLogOpen&&typeof lhOpsUpdate==='function')lhOpsUpdate(dt);
     if(!nightLogOpen)lhUpdateNightLogMonitoring();
     if(!nightLogOpen&&G.state==='play'&&!(G.freeMode&&(LH_FIELD_STATE.paused||LH_FIELD_STATE.journalOpen)))update(dt);
     if(!nightLogOpen&&G&&G.freeMode&&!LH_FIELD_STATE.paused&&!LH_FIELD_STATE.journalOpen)lhTickFieldSystems();
@@ -2355,7 +3048,7 @@ function loop(ts){
     if(!nightLogOpen&&G&&G.freeMode&&!LH_FIELD_STATE.paused&&!LH_FIELD_STATE.journalOpen)lhAmbientTick(dt);
     else if(!nightLogOpen&&G.state==='scare')updateScare(dt);
   }
-  if(G&&!$('#game').hidden)render();
+  if(G&&!$('#game').hidden){render();if(typeof lhOpsDrawAll==='function')lhOpsDrawAll();}
   requestAnimationFrame(loop);
 }
 
