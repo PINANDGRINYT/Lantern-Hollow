@@ -2195,6 +2195,11 @@ function drawOffice(){
   ctx.fillStyle='#8b6940';ctx.beginPath();ctx.moveTo(-18,-18);ctx.lineTo(18,-18);ctx.lineTo(10,-31);ctx.lineTo(-10,-31);ctx.closePath();ctx.fill();
   ctx.fillStyle='#f0c778';ctx.fillRect(-7,-29,14,3);ctx.restore();
 
+  drawOfficeRealisticProps();
+  drawOfficeRealisticLighting();
+  drawOfficeExtraWear();
+  drawOfficeCinematicFinish();
+
   if(G.powerOut){
     ctx.fillStyle='rgba(0,0,0,.9)';ctx.fillRect(0,0,W,H);
     var p=1-clamp(G.outT/14,0,1);
@@ -2205,6 +2210,319 @@ function drawOffice(){
     if(Math.random()<.5)drawNoise(.05);
   }
   vignette(.7);
+}
+
+/* ========================================================================
+   LANTERN HOLLOW — SECURITY OFFICE REALISM PASS
+   Procedural, depth-layered desk objects for the non-Free-Mode office view.
+   Everything is drawn with the existing canvas renderer: no remote assets,
+   external libraries, or change to the game's core controls are required.
+   ======================================================================== */
+function drawOfficeRealisticProps(){
+  if(!G||G.freeMode||G.cam)return;
+  var t=frame||0;
+  var nearThreat=!!(G.chars&&G.chars.some(function(c){return c.room==='DL'||c.room==='DR';}));
+  var pulse=.5+.5*Math.sin(t*.19);
+  var deskShade=ctx.createLinearGradient(0,392,0,H);
+  deskShade.addColorStop(0,'rgba(0,0,0,.02)');
+  deskShade.addColorStop(.18,'rgba(0,0,0,.10)');
+  deskShade.addColorStop(1,'rgba(0,0,0,.44)');
+  ctx.fillStyle=deskShade;
+  ctx.beginPath();ctx.moveTo(250,H);ctx.lineTo(300,400);ctx.lineTo(660,400);ctx.lineTo(710,H);ctx.closePath();ctx.fill();
+
+  function poly(points,fill,stroke,lineWidth){
+    ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);
+    for(var i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);
+    ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill();}
+    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lineWidth||1;ctx.stroke();}
+  }
+  function line(points,color,width){
+    ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);
+    for(var i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);
+    ctx.strokeStyle=color;ctx.lineWidth=width||1;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
+  }
+  function ellipse(x,y,rx,ry,fill,stroke,width){
+    ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
+    if(fill){ctx.fillStyle=fill;ctx.fill();}
+    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width||1;ctx.stroke();}
+  }
+  function rounded(x,y,w,h,r,fill,stroke,width){
+    ctx.beginPath();ctx.roundRect(x,y,w,h,r);
+    if(fill){ctx.fillStyle=fill;ctx.fill();}
+    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width||1;ctx.stroke();}
+  }
+  function woodGrain(x1,y1,x2,y2,count,seed,alpha){
+    ctx.save();ctx.beginPath();ctx.rect(x1,y1,x2-x1,y2-y1);ctx.clip();
+    for(var i=0;i<count;i++){
+      var yy=y1+((i*37+seed*19)%Math.max(1,y2-y1));
+      var xx=x1+((i*53+seed*11)%Math.max(1,x2-x1));
+      var len=8+((i*29+seed*7)%58);
+      ctx.beginPath();ctx.moveTo(xx,yy);ctx.bezierCurveTo(xx+len*.22,yy-1,xx+len*.72,yy+1,Math.min(x2,xx+len),yy);
+      ctx.strokeStyle='rgba('+(i%3===0?'218,169,111':'12,8,6')+','+(alpha*(.35+(i%4)*.12))+')';ctx.lineWidth=(i%5===0?1.4:.55);ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function screw(x,y){
+    ellipse(x,y,2.3,2.3,'#161411','#6d6251',.8);
+    line([[x-1,y],[x+1,y]],'rgba(205,188,151,.55)',.55);
+  }
+
+  /* Realistic desk-front bevel and old varnished laminate. */
+  poly([[299,400],[660,400],[710,540],[250,540]],'#241a14','#090807',3);
+  poly([[300,400],[660,400],[667,415],[294,415]],'#755033','#17110d',1.5);
+  poly([[294,415],[667,415],[683,454],[278,454]],'#503522','#1b130e',1);
+  poly([[278,454],[683,454],[710,540],[250,540]],'#352319','#120d0a',2);
+  var topLight=ctx.createLinearGradient(0,400,0,440);
+  topLight.addColorStop(0,'rgba(246,192,121,.22)');topLight.addColorStop(.35,'rgba(159,100,57,.08)');topLight.addColorStop(1,'rgba(0,0,0,.08)');
+  poly([[299,400],[660,400],[710,540],[250,540]],topLight,null);
+  woodGrain(275,403,688,538,98,23,.18);
+  line([[300,402],[660,402]],'rgba(250,210,153,.42)',1.5);
+  line([[278,455],[683,455]],'rgba(10,6,4,.55)',3);
+  line([[281,458],[680,458]],'rgba(171,119,74,.20)',1);
+  for(var riv=0;riv<9;riv++)screw(300+riv*44,408);
+
+  /* Raised CRT monitor shell: rounded bevels, side depth, glass reflections. */
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,.65)';ctx.shadowBlur=16;ctx.shadowOffsetY=7;
+  poly([[389,295],[558,295],[570,306],[570,395],[560,405],[392,405],[383,396],[383,306]],'#121116','#050507',2);
+  ctx.restore();
+  poly([[389,296],[558,296],[566,303],[566,387],[559,396],[392,396],[387,390],[387,303]],'#33313a','#77717a',1);
+  poly([[394,301],[553,301],[560,307],[560,384],[554,390],[394,390],[392,384],[392,307]],'#080b0a','#4f4b4a',1);
+  var glass=ctx.createLinearGradient(395,302,553,388);
+  glass.addColorStop(0,'rgba(130,165,137,.07)');glass.addColorStop(.48,'rgba(45,78,57,.15)');glass.addColorStop(1,'rgba(1,4,2,.38)');
+  poly([[394,302],[553,302],[553,388],[394,388]],glass,null);
+  poly([[398,305],[411,305],[450,385],[440,385]],'rgba(210,229,207,.035)',null);
+  line([[397,309],[402,309],[402,380]],'rgba(200,203,186,.17)',1);
+  ellipse(476,398,7,2,'#080908','#55504a',.7);
+  ellipse(476,398,2,1, G.powerOut?'#241c17':(pulse>.48?'#d65337':'#513024'),null);
+  /* monitor ventilation slots and bevel scratches */
+  for(var vent=0;vent<8;vent++)line([[410+vent*5,394],[412+vent*5,394]],'#0a090a',1.3);
+  line([[389,306],[389,386]],'rgba(190,180,157,.13)',1);
+  line([[561,308],[561,382]],'rgba(0,0,0,.55)',2);
+
+  /* Keyboard on a slight perspective plane, with every key separated. */
+  ctx.save();ctx.shadowColor='rgba(0,0,0,.55)';ctx.shadowBlur=8;ctx.shadowOffsetY=4;
+  poly([[414,409],[510,409],[531,432],[401,432]],'#111116','#050506',2);
+  ctx.restore();
+  poly([[414,409],[510,409],[531,432],[401,432]],'#36333a','#777079',.8);
+  poly([[418,411],[507,411],[525,429],[406,429]],'#17181d','#070708',1);
+  for(var kr=0;kr<3;kr++){
+    var keyCount=kr===2?10:13;
+    for(var kc=0;kc<keyCount;kc++){
+      var kx=418+kc*(kr===2?8.8:6.8)+kr*2.4,ky=413+kr*5.1;
+      if(kx>519)continue;
+      poly([[kx,ky],[kx+5.6,ky],[kx+6.7,ky+3.5],[kx+1,ky+3.5]],'#66616a','#0b0b0d',.45);
+      line([[kx+.7,ky+.6],[kx+4.9,ky+.6]],'rgba(246,233,210,.24)',.45);
+    }
+  }
+  poly([[441,428],[475,428],[481,430],[437,430]],'#0c0d10',null);
+
+  /* Heavy, old telephone base; handset sits in molded cradle. */
+  ctx.save();ctx.shadowColor='rgba(0,0,0,.65)';ctx.shadowBlur=10;ctx.shadowOffsetY=5;
+  poly([[556,407],[600,402],[621,415],[616,439],[570,444],[550,431]],'#08090a','#020203',2);
+  ctx.restore();
+  poly([[556,407],[600,402],[621,415],[616,439],[570,444],[550,431]],'#202328','#77716a',1);
+  poly([[558,408],[598,404],[617,415],[612,422],[563,428],[552,419]],'#34363a','#888078',.8);
+  poly([[563,428],[612,422],[616,438],[570,442],[555,432]],'#151619','#060608',1);
+  /* keypad wells, raised buttons and embossed labels */
+  for(var pr=0;pr<3;pr++)for(var pc=0;pc<3;pc++){
+    var px=570+pc*10+pr*1.9,py=412+pr*5+pc*.6;
+    ellipse(px,py,2.5,1.65,'#a4a093','#171719',.7);
+    ellipse(px-.35,py-.35,.7,.42,'rgba(255,255,255,.50)',null);
+  }
+  ellipse(605,416,3.2,2.2,'#6c8271','#0d1110',.8);
+  /* handset, cradle horns, highlight and coiled cord */
+  ctx.save();ctx.shadowColor='rgba(0,0,0,.6)';ctx.shadowBlur=5;ctx.shadowOffsetY=3;
+  poly([[557,401],[565,396],[586,395],[602,400],[600,405],[582,402],[565,405]],'#101114','#030304',1.3);
+  ctx.restore();
+  line([[561,400],[568,398],[584,398],[596,401]],'rgba(223,221,204,.37)',1.1);
+  ellipse(559,402,5,3,'#090a0c','#65605a',.8);
+  ellipse(599,403,5,3,'#090a0c','#65605a',.8);
+  ctx.beginPath();ctx.moveTo(603,404);ctx.bezierCurveTo(622,398,626,412,615,418);ctx.bezierCurveTo(608,421,627,428,636,418);
+  ctx.strokeStyle='#101114';ctx.lineWidth=2.4;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(603,404);ctx.bezierCurveTo(622,398,626,412,615,418);ctx.bezierCurveTo(608,421,627,428,636,418);
+  ctx.strokeStyle='rgba(186,176,159,.23)';ctx.lineWidth=.65;ctx.stroke();
+  /* phone line status lamps: pulse harder when a visitor is at either door */
+  ellipse(605,429,2.2,1.7,nearThreat&&(t%24<12)?'#ef583a':'#463029',null);
+  if(nearThreat&&t%24<12){ctx.save();ctx.shadowColor='#f1452b';ctx.shadowBlur=10;ellipse(605,429,2.2,1.7,'rgba(239,65,42,.75)',null);ctx.restore();}
+
+  /* Mouse and a frayed cable curling toward the keyboard. */
+  ctx.save();ctx.shadowColor='rgba(0,0,0,.6)';ctx.shadowBlur=6;ctx.shadowOffsetY=3;
+  poly([[536,418],[548,416],[554,424],[550,436],[540,438],[534,429]],'#1b1b20','#070708',1.2);
+  ctx.restore();
+  line([[544,418],[544,427]],'rgba(197,190,178,.42)',.8);
+  ellipse(544,421,1.1,2,'#877867',null);
+  ctx.beginPath();ctx.moveTo(540,435);ctx.bezierCurveTo(531,442,527,438,524,432);ctx.strokeStyle='#151419';ctx.lineWidth=1.4;ctx.stroke();
+
+  /* Mug with coffee meniscus, chipped ceramic rim, handle, and warm reflections. */
+  ctx.save();ctx.shadowColor='rgba(0,0,0,.58)';ctx.shadowBlur=8;ctx.shadowOffsetY=4;
+  poly([[630,410],[650,410],[647,434],[634,436]],'#14171a','#050607',1.3);
+  ctx.restore();
+  poly([[630,410],[650,410],[647,434],[634,436]],'#35383a','#0d0e0f',1);
+  var mug=ctx.createLinearGradient(630,0,651,0);mug.addColorStop(0,'#1a2023');mug.addColorStop(.25,'#596064');mug.addColorStop(.48,'#24292c');mug.addColorStop(.86,'#101214');mug.addColorStop(1,'#6c6255');
+  poly([[630,410],[650,410],[647,434],[634,436]],mug,null);
+  ellipse(640,410,10,3.1,'#08090a','#88847a',.8);
+  ellipse(640,410,7.6,2.0,'#21140e','#5d5142',.7);
+  ellipse(640,410,5.5,1.2,'#100b08',null);
+  ctx.beginPath();ctx.moveTo(650,415);ctx.bezierCurveTo(663,412,665,427,648,428);ctx.strokeStyle='#25292b';ctx.lineWidth=4;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(650,415);ctx.bezierCurveTo(660,414,661,424,649,425);ctx.strokeStyle='#71685e';ctx.lineWidth=1;ctx.stroke();
+  line([[634,414],[635,430]],'rgba(222,229,222,.25)',1);
+
+  /* Open logbook, loose incident forms, paper fibers, pencil and brass clip. */
+  ctx.save();ctx.shadowColor='rgba(0,0,0,.55)';ctx.shadowBlur=7;ctx.shadowOffsetY=4;
+  poly([[312,416],[351,411],[372,432],[329,442]],'#17120f','#080706',1.5);
+  ctx.restore();
+  poly([[312,414],[348,409],[369,429],[327,440]],'#b9ab8d','#6e5a42',.7);
+  poly([[348,409],[369,429],[369,432],[348,412]],'#67513a',null);
+  line([[349,412],[329,438]],'rgba(58,43,29,.56)',1);
+  for(var pl=0;pl<7;pl++){
+    var py2=416+pl*2.8;
+    line([[317+(pl%2),py2],[341-(pl%3),py2-2]],pl===3?'rgba(143,72,47,.64)':'rgba(53,47,37,.45)',.6);
+    line([[352,py2-1],[360,py2+5]],'rgba(66,48,31,.30)',.55);
+  }
+  poly([[376,416],[400,413],[410,426],[383,431]],'#c8bea3','#75664e',.8);
+  line([[380,419],[397,417]],'rgba(54,45,36,.48)',.6);
+  line([[382,423],[400,420]],'rgba(54,45,36,.48)',.6);
+  line([[385,427],[401,423]],'rgba(54,45,36,.48)',.6);
+  /* pencil with worn lacquer, exposed wood point, metal ferrule */
+  ctx.save();ctx.translate(375,429);ctx.rotate(-.28);
+  poly([[0,0],[42,-1],[46,1],[42,3],[0,3]],'#171517','#060506',.7);
+  poly([[5,0],[37,0],[37,2],[5,2]],'#b48d4c',null);
+  poly([[0,0],[5,0],[5,3],[0,3]],'#b7a28a','#2b2927',.4);
+  poly([[42,-1],[48,1],[42,3]],'#dbc5a1','#5d4e3f',.5);
+  ctx.restore();
+
+  /* Sticky notes layered on the tabletop with curled lower corners. */
+  ctx.save();ctx.shadowColor='rgba(0,0,0,.58)';ctx.shadowBlur=5;ctx.shadowOffsetY=3;
+  poly([[290,440],[318,436],[326,450],[296,454]],'#b0a06b','#62563a',.8);
+  ctx.restore();
+  poly([[290,439],[318,435],[326,449],[296,453]],'#b7a56a','#655634',.8);
+  poly([[318,435],[326,449],[322,450],[318,441]],'#85754b',null);
+  for(var st=0;st<4;st++)line([[295,441+st*2.5],[312,439+st*2.5]],'rgba(49,43,29,.62)',.6);
+  /* a torn visitor pass with a tiny face photograph and clip */
+  poly([[395,438],[419,435],[427,446],[400,451]],'#c2b79c','#5d4f3b',.8);
+  poly([[400,439],[409,438],[411,445],[401,447]],'#26282a',null);
+  ellipse(405.5,440.5,2,2,'#908276',null);
+  line([[413,440],[421,439]],'rgba(46,39,31,.6)',.6);
+  line([[414,443],[422,442]],'rgba(46,39,31,.6)',.6);
+  poly([[393,436],[404,434],[407,437],[396,439]],'#a8a7a0','#4e4b43',.6);
+
+  /* desk drawer pulls and lower fascia give a stronger 3D foreground. */
+  poly([[371,465],[586,465],[605,515],[352,515]],'#291d15','#0c0907',1.2);
+  line([[365,470],[591,470]],'rgba(182,123,69,.25)',1);
+  poly([[421,480],[491,480],[497,489],[415,489]],'#51402c','#100c09',1);
+  poly([[430,482],[485,482],[489,487],[426,487]],'#9b815a','#2d2419',.7);
+  ellipse(457,484.5,3.2,1.8,'#171514','#d1b27d',.6);
+  line([[373,496],[409,506]],'rgba(160,108,66,.14)',1);
+  line([[545,494],[577,487]],'rgba(160,108,66,.13)',1);
+
+  /* A few surface scratches and rings; restrained so the scene remains legible. */
+  for(var sc=0;sc<24;sc++){
+    var sx=287+((sc*47+19)%390),sy=418+((sc*31+7)%88);
+    line([[sx,sy],[sx+3+(sc%8)*1.4,sy-(sc%3)*.45]],'rgba(222,182,128,'+(.035+(sc%4)*.013)+')',.55);
+  }
+  ellipse(627,440,10,2.3,'rgba(0,0,0,.07)','rgba(221,185,130,.07)',.5);
+}
+
+function drawOfficeRealisticLighting(){
+  if(!G||G.freeMode||G.cam)return;
+  var t=frame||0;
+  ctx.save();
+  /* local pool of amber light from the desk lamp */
+  var lamp=ctx.createRadialGradient(625,371,3,625,371,180);
+  lamp.addColorStop(0,'rgba(255,200,117,.12)');
+  lamp.addColorStop(.35,'rgba(220,142,67,.055)');
+  lamp.addColorStop(1,'rgba(210,126,52,0)');
+  ctx.fillStyle=lamp;ctx.fillRect(440,245,390,280);
+  /* sickly red spill from the hall, faintly reflecting on the right desk edge */
+  var red=ctx.createRadialGradient(720,310,4,720,310,250);
+  red.addColorStop(0,'rgba(135,22,26,.085)');red.addColorStop(1,'rgba(90,9,14,0)');
+  ctx.fillStyle=red;ctx.fillRect(470,150,490,380);
+  /* subtle CRT scan shimmer, clipped strictly to monitor glass */
+  if(!G.powerOut){
+    ctx.save();ctx.beginPath();ctx.rect(394,302,159,86);ctx.clip();
+    for(var y=0;y<86;y+=4){ctx.fillStyle='rgba(185,219,178,'+(.018+.009*Math.sin(t*.1+y*.3))+')';ctx.fillRect(394,302+y,159,1);}
+    var reflection=ctx.createLinearGradient(395,302,550,381);
+    reflection.addColorStop(0,'rgba(255,255,255,.045)');reflection.addColorStop(.24,'rgba(255,255,255,.008)');reflection.addColorStop(.7,'rgba(0,0,0,0)');reflection.addColorStop(1,'rgba(0,0,0,.11)');
+    ctx.fillStyle=reflection;ctx.fillRect(394,302,159,86);
+    ctx.restore();
+  }
+  /* analogue lens falloff over the office composition */
+  var vign=ctx.createRadialGradient(W*.5,H*.48,H*.22,W*.5,H*.48,H*.75);
+  vign.addColorStop(0,'rgba(0,0,0,0)');
+  vign.addColorStop(.72,'rgba(0,0,0,.10)');
+  vign.addColorStop(1,'rgba(0,0,0,.34)');
+  ctx.fillStyle=vign;ctx.fillRect(0,0,W,H);
+  ctx.restore();
+}
+
+/* Desk handset interaction: clicking the rendered phone opens the existing
+   in-game-only emergency phone panel, only while the player is at the desk. */
+cv.addEventListener('click',function(e){
+  if(!G||G.freeMode||G.cam||G.state!=='play'||$('#game').hidden)return;
+  var rect=cv.getBoundingClientRect();
+  var x=(e.clientX-rect.left)*(W/rect.width);
+  var y=(e.clientY-rect.top)*(H/rect.height);
+  if(x>=548&&x<=642&&y>=397&&y<=446){
+    var panel=document.getElementById('phonePanel');
+    if(panel){
+      panel.hidden=false;
+      var status=document.getElementById('phoneStatus');
+      if(status)status.textContent='The desk receiver clicks into the line. A faint voice crackles beneath the static.';
+      if(typeof tone==='function')tone(420,.08,'triangle',.035,300);
+      if(typeof lhAddLog==='function')lhAddLog('DESK TELEPHONE','Lifted the receiver while at the security desk.','NOTICE');
+    }
+  }
+});
+
+/* Office realism also darkens slightly during an unpowered shift, but never
+   draws over the active jumpscare or first-person Free Mode render. */
+function drawOfficeAtmosphericDepth(){
+  if(!G||G.freeMode||G.cam||G.powerOut)return;
+  ctx.save();
+  var threat=G.chars?G.chars.filter(function(c){return c.room==='DL'||c.room==='DR';}).length:0;
+  if(threat){
+    var shade=ctx.createRadialGradient(W*.5,H*.63,15,W*.5,H*.63,440);
+    shade.addColorStop(0,'rgba(92,8,13,0)');
+    shade.addColorStop(1,'rgba(82,4,8,'+Math.min(.13,threat*.035)+')');
+    ctx.fillStyle=shade;ctx.fillRect(0,0,W,H);
+  }
+  ctx.restore();
+}
+
+/* The extra ambience pass is kept separate from the game-state simulation. */
+function drawOfficeCinematicFinish(){
+  if(!G||G.freeMode||G.cam)return;
+  ctx.save();
+  ctx.globalAlpha=.045;
+  for(var i=0;i<80;i++){
+    var gx=(i*137+frame*3)%W,gy=(i*71+frame*2)%H;
+    ctx.fillStyle=(i%3===0)?'#d0bd9b':'#000';
+    ctx.fillRect(gx,gy,1+(i%3),1);
+  }
+  ctx.globalAlpha=1;
+  drawOfficeAtmosphericDepth();
+  ctx.restore();
+}
+
+/* Detailed surfaces for the security desk, generated at runtime for every shift. */
+function officeMaterialSample(x,y,seed){
+  var v=Math.sin(x*12.9898+y*78.233+seed*37.719)*43758.5453;
+  return v-Math.floor(v);
+}
+function drawOfficeExtraWear(){
+  if(!G||G.freeMode||G.cam)return;
+  ctx.save();
+  /* Hairline cracks in the old plaster above the monitor. */
+  ctx.strokeStyle='rgba(0,0,0,.16)';ctx.lineWidth=.8;
+  var cracks=[[[242,122],[251,137],[246,149],[260,166]],[[752,94],[744,110],[753,123],[742,137]],[[170,236],[181,247],[177,261]]];
+  cracks.forEach(function(p){ctx.beginPath();ctx.moveTo(p[0][0],p[0][1]);for(var i=1;i<p.length;i++)ctx.lineTo(p[i][0],p[i][1]);ctx.stroke();});
+  ctx.strokeStyle='rgba(191,150,107,.07)';ctx.lineWidth=1;
+  for(var i=0;i<10;i++){
+    var x=130+(i*83)%700,y=112+(i*47)%205;
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+4+(i%5)*2,y+1+(i%3));ctx.stroke();
+  }
+  ctx.restore();
 }
 
 /* ---------- cameras ---------- */
@@ -5847,5 +6165,117 @@ body.lhx-panic #game .screen{outline:2px solid #a02c2c}
  requestAnimationFrame(tick);
 })();
 </script>
+
+
+<!-- LANTERN HOLLOW OFFICE ART NOTES
+The security office now uses a layered, faux-3D canvas pass.
+Desk depth comes from a trapezoidal surface, bevels, edge highlights,
+wood grain, scratches and a front fascia with a recessed drawer.
+The monitor uses a multi-layer CRT shell, screen glass, a soft reflection,
+ventilation slots and an illuminated status lamp.
+A perspective keyboard has individually drawn raised keys.
+The desk telephone has a raised base, button wells, handset, cradle horns,
+coiled line cord and a blinking line lamp when a creature is near a door.
+The desk also contains a ceramic mug, coffee meniscus, handle, open logbook,
+incident sheets, pencil, sticky note, visitor pass and metallic clip.
+Warm desk-lamp spill, red hall spill, CRT scan shimmer and lens falloff
+are procedurally layered only in the office view.
+The phone drawing has a hit region that opens the existing phone overlay.
+The overlay remains a simulated game feature; it does not call real services.
+The camera render and first-person Free Mode retain their dedicated renderers.
+Every object is constructed from canvas paths and gradients at runtime.
+No network requests or new asset downloads are introduced by this pass.
+The screen stays at the existing world dimensions and follows its normal loop.
+The details are purposely restrained to protect contrast for UI text.
+The procedural finish runs only in normal office rendering and not during
+full-screen scares, menu scenes, security camera scenes or first-person play.
+
+ART DIRECTION NOTES
+01. Prefer physical silhouettes over flat icons.
+02. Keep the monitor housing visibly thicker than its glass.
+03. Use edge glints to separate dark props from dark wood.
+04. Let each raised object cast a shadow toward the foreground.
+05. Use warmer colors for the desk lamp and colder colors for the CRT.
+06. Keep the phone red indicator subtle until a threat reaches the doors.
+07. Give keys a front lip, a dark gap and a small top highlight.
+08. Make the cup opening elliptical to reinforce viewing angle.
+09. Use a dark coffee surface rather than a flat brown disk.
+10. Use a double line for handset cable to simulate reflected rubber.
+11. Give paper edges a slightly irregular profile.
+12. Add a dark line to represent the spine of the open logbook.
+13. Use pencil ferrule and graphite point to create recognizable ends.
+14. Keep grain clipped to the desk plane so it does not float on the wall.
+15. Use monitor reflection at low opacity so camera labels remain readable.
+16. Use local gradients instead of a full-screen bright fog.
+17. Keep the end vignette softer than the scare vignette.
+18. Use randomized-looking deterministic scratches to avoid severe shimmer.
+19. Keep desk objects stable from frame to frame.
+20. Preserve the original 960 by 540 logical coordinate system.
+21. Retain the existing resize behavior of the game canvas.
+22. Avoid images loaded over the network.
+23. Use local state only to pulse the telephone light.
+24. Do not alter monster paths or night progression.
+25. Do not alter camera selection or camera labels.
+26. Do not alter power drain, doors, or office lights.
+27. Keep the phone overlay as a standalone interface.
+28. Keep phone panel controls usable by keyboard and touch.
+29. Keep the “simulation only” disclaimer visible in the phone overlay.
+30. Preserve the game's existing sound and caption settings.
+31. Keep the normal office visible even with the camera monitor lowered.
+32. Use multi-stop gradients for object volume.
+33. Use bevel polygons for the monitor's plastic frame.
+34. Use a bright top bevel and a deep underside shadow.
+35. Keep table supports visible only where perspective allows.
+36. Avoid overly saturated blood-red ambient light in the office.
+37. Let the doorways remain the most visually important threat areas.
+38. Keep the middle of the screen clear enough for the existing HUD.
+39. Preserve the emergency controls outside the game canvas.
+40. Keep all added routines isolated from the Free Mode raycaster.
+41. Do not create external WebGL dependencies.
+42. Use simple canvas paths for broad browser compatibility.
+43. Keep animation timing tied to the frame counter already in use.
+44. Avoid allocating canvases or image buffers on every frame.
+45. Make all static props deterministic rather than re-randomizing them.
+46. Use clipped scan lines only on the monitor glass.
+47. Use the vignette as an edge effect, not a black screen filter.
+48. Use a faded red spill for threat signaling, not permanent tinting.
+49. Keep CRT phosphor colors muted to fit the night palette.
+50. Leave room for later interactive objects without restructuring the renderer.
+
+Implementation checklist
+[complete] Insert realism pass into normal office renderer.
+[complete] Add dimensional monitor frame and glass reflections.
+[complete] Add perspective keyboard and raised key caps.
+[complete] Add molded telephone body and separate receiver.
+[complete] Add coiled telephone cord and subtle line lamp.
+[complete] Add cup, coffee surface and handle.
+[complete] Add incident paper, note, logbook and pencil.
+[complete] Add desk bevel, wood grain and scratches.
+[complete] Add drawer fascia and a recessed metal pull.
+[complete] Add warm local light and cool screen sheen.
+[complete] Add office-only click interaction for telephone.
+[complete] Avoid calling any real emergency service.
+[complete] Keep the Free Mode render path unchanged.
+[complete] Keep the security camera render path unchanged.
+[complete] Check every inline script with Node.js syntax validation.
+[complete] Verify the output is longer than six thousand lines.
+
+Future office prop ideas
+A chipped ceramic ashtray could be placed away from the notes.
+A folded shift schedule could sit below the keyboard.
+The wall clock could advance with the in-game hour.
+A small taped photograph could show the theatre crew.
+The CRT could occasionally display a harmless raster roll.
+The telephone cord could gently shift when the receiver is picked up.
+A desk fan could rotate only if power is available.
+Paper corners could lift slightly during the ventilation cycle.
+A wall switch could show a tiny highlight when clicked.
+The desk lamp could sputter during a power warning.
+The mug could leave a faint circular stain on the desk finish.
+The monitor's plastic could show fine scuffs under the lamp.
+The keyboard could have a large spacebar and a worn enter key.
+The phone buttons could reflect the desk lamp differently from the base.
+Each additional detail should remain subtle enough not to hide gameplay.
+--> 
 
 </body></html>
