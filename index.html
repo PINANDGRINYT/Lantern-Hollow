@@ -517,15 +517,17 @@ function sThud(){tone(70,.35,'sine',.5,30);noise(.3,.4,300);}
 function sStep(v){noise(.09,v||.12,420,'bandpass');}
 function sKnock(){tone(120,.12,'square',.2,80);setTimeout(function(){tone(110,.12,'square',.2,70);},160);}
 function sScare(){
-  /* A short, layered stinger: sharp impact, descending metal tone, sub hit, then brittle static. */
-  noise(.75,.72,4200,'highpass');
-  tone(760,.22,'sawtooth',.32,95);
-  tone(145,.95,'square',.36,29);
-  tone(54,1.05,'sine',.65,24);
-  setTimeout(function(){noise(.34,.55,1800,'bandpass');tone(420,.38,'triangle',.22,88);},85);
-  setTimeout(function(){tone(980,.1,'square',.18,240);noise(.22,.28,6200,'highpass');},190);
-  setTimeout(function(){tone(72,.5,'sawtooth',.31,31);},310);
-  setTimeout(function(){noise(.28,.19,2600,'highpass');},520);
+  /* Layered cinematic attack sting: air crack, sub impact, metal descent and a delayed aftershock. */
+  noise(.82,.70,4600,'highpass');
+  tone(980,.19,'sawtooth',.34,72);
+  tone(178,.82,'square',.34,24);
+  tone(43,1.25,'sine',.78,18);
+  tone(1420,.075,'square',.16,310);
+  setTimeout(function(){noise(.38,.52,1650,'bandpass');tone(510,.42,'triangle',.24,64);},72);
+  setTimeout(function(){tone(1240,.095,'square',.2,190);noise(.25,.32,6500,'highpass');},165);
+  setTimeout(function(){tone(68,.63,'sawtooth',.34,22);tone(310,.24,'triangle',.11,48);},285);
+  setTimeout(function(){noise(.38,.25,2450,'highpass');tone(47,.62,'sine',.34,23);},520);
+  setTimeout(function(){tone(165,.36,'square',.16,42);noise(.22,.16,900,'bandpass');},790);
 }
 function sChime(){[523,659,784,1046].forEach(function(f,i){setTimeout(function(){tone(f,.9,'sine',.18);},i*220);});}
 function sOut(){tone(220,1.6,'sawtooth',.25,28);noise(.6,.3,200);}
@@ -658,7 +660,7 @@ function doScare(c){
 }
 function updateScare(dt){
   G.scare.t+=dt;
-  if(G.scare.t>1.7&&!G.ended){G.ended=true;G.state='over';showEnd(false);}
+  if(G.scare.t>2.28&&!G.ended){G.ended=true;G.state='over';showEnd(false);}
 }
 function winGame(){
   if(typeof lhAddLog==='function')lhAddLog('SHIFT SURVIVED','6 AM reached. Night '+G.night+' completed successfully.','positive');
@@ -842,7 +844,31 @@ function spawnMonster(id){
  var d=monsterDefs[id];if(!d)return;c={id:id,name:d.name,idx:d.idx,room:d.room,lvl:0,timer:999999,doorT:0};G.chars.push(c);commandMsg(d.name+' spawned in '+(CAMNAME[c.room]||c.room)+'.');if(typeof lhAddLog==='function')lhAddLog('COMMAND CONSOLE',d.name+' spawned in '+(CAMNAME[c.room]||c.room)+'.','warning');sThud();syncUI();
 }
 function removeMonster(id){if(!G)return;var c=getMonster(id);if(!c){commandMsg((monsterDefs[id]||{name:id}).name+' is not active.');return;}G.chars=G.chars.filter(function(x){return x.id!==id;});commandMsg(c.name+' removed from the world.');if(typeof lhAddLog==='function')lhAddLog('COMMAND CONSOLE',c.name+' removed from the building.');sClick();syncUI();}
-function enterFreeMode(on){if(!G)return;G.freeMode=!!on;G.cam=false;G.manualScare=null;G.freeKeys={};if(on){G.powerOut=false;G.power=Math.max(100,G.power);G.player=FREE_START();G.freeMonsterAI=true;var aiBtn=$('#monsterAiToggle');if(aiBtn){aiBtn.textContent='Monster AI: ACTIVE';aiBtn.setAttribute('aria-pressed','true');}G.chars.forEach(function(c){c.timer=999999;});commandMsg('3D Free Mode active — monsters are hunting you. Keep moving and do not let them get close.');if(typeof lhAddLog==='function')lhAddLog('FREE MODE','Entered first-person exploration. Monsters are actively hunting the player.','warning');if(typeof LH_NIGHT_LOG!=='undefined')LH_NIGHT_LOG.lastFreeRoom='';}else{commandMsg('Free mode disabled. Night survival resumed.');if(typeof lhAddLog==='function')lhAddLog('FREE MODE','Exited first-person exploration.');G.t=Math.min(G.t,HOUR*5.95);}syncUI();}
+function enterFreeMode(on){
+ if(!G)return;
+ if(on&&G.state==='scare')return;
+ G.freeMode=!!on;G.cam=false;G.manualScare=null;G.freeKeys={};
+ if(on){
+  if(G.state!=='play'){
+   G.state='play';G.ended=false;G.scare=null;
+   if(G.t>=HOUR*6)G.t=0;
+  }
+  G.powerOut=false;G.power=Math.max(100,G.power);G.player=FREE_START();G.freeMonsterAI=true;G.freeT=G.freeT||0;
+  var aiBtn=$('#monsterAiToggle');if(aiBtn){aiBtn.textContent='Monster AI: ACTIVE';aiBtn.setAttribute('aria-pressed','true');}
+  G.chars.forEach(function(c){
+   c.timer=999999;c.wp=null;c.pathT=0;
+   if(!c.freePos){var rp=roomPos[c.room]||roomPos.HALL;c.freePos={x:rp[0]+((c.idx%3)-1)*.38,y:rp[1]+(Math.floor(c.idx/3))*.3};}
+  });
+  commandMsg('3D Free Mode active — all active monsters are hunting you. Sprint, use your flashlight, and keep moving. Contact is fatal.');
+  if(typeof lhAddLog==='function')lhAddLog('FREE MODE','Entered first-person exploration. All active monsters are hunting the player; physical contact triggers the death sequence.','warning');
+  if(typeof LH_NIGHT_LOG!=='undefined')LH_NIGHT_LOG.lastFreeRoom='';
+ }else{
+  commandMsg('Free mode disabled. Night survival resumed.');
+  if(typeof lhAddLog==='function')lhAddLog('FREE MODE','Exited first-person exploration.');
+  G.t=Math.min(G.t,HOUR*5.95);
+ }
+ syncUI();
+}
 function triggerCommandScare(){if(!G)return;var id=$('#scarePick').value;if(id==='selected')id=$('#monsterPick').value;var c=id==='lamp'?{id:'lamp',name:'The Lamplighter'}:getMonster(id);if(!c){spawnMonster(id);c=getMonster(id);}if(!c)return;if(G.state!=='play'&&!G.freeMode){commandMsg('Start a night or enter Free Mode to preview a jumpscare.');return;}/* Command-panel scares are visual previews only: never call doScare(), which ends the night. */G.manualScare={c:c,t:0};sScare();commandMsg('SAFE JUMPSCARE PREVIEW: '+c.name+' — you cannot die from a command-panel scare.');}
 $('#freeToggle').addEventListener('click',function(){enterFreeMode(!G.freeMode);});
 function toggleCommandPanel(force){var panel=$('#commandPanel');if(!panel||!G||$('#game').hidden)return;panel.hidden=typeof force==='boolean'?!force:!panel.hidden;if(!panel.hidden){commandMsg('Command Console open. Ctrl+C hides it.');}else{commandMsg('Command Console hidden. Press Ctrl+C to reopen it.');}if(document.pointerLockElement===cv&&document.exitPointerLock)document.exitPointerLock();}
@@ -905,7 +931,7 @@ function seenBy(p,fp){
  for(var s=.3;s<d;s+=.25){if(solid(p.x+dx/d*s,p.y+dy/d*s))return false;}
  return true;
 }
-var MON_SPEED={pip:.85,hob:1.7,mir:.8,crow:1.0,stitch:.7};
+var MON_SPEED={pip:1.95,hob:3.05,mir:1.72,crow:2.35,stitch:1.88};
 function updateFree(dt){
  G.freeT+=dt;
  if(G.teenBreathUntil&&performance.now()>G.teenBreathUntil){G.teenHoldBreath=false;G.teenBreathUntil=0;}
@@ -945,7 +971,7 @@ function updateFree(dt){
   if(G.teenCrouching)spd*=Math.max(.48,.72-(window.LHTeenPrefs&&window.LHTeenPrefs.quietSteps||0)*.06);
   if(G.teenHoldBreath)spd*=.76;
   if(c.id==='hob'&&seenBy(p,fp))spd*=.45;else if(!(window.LHTeenPrefs&&window.LHTeenPrefs.difficulty==='story')){if(!seenBy(p,fp))spd*=1.3;else if(c.id!=='hob')spd*=.9;}
-  if(dist<=.9||spd===0)return;
+  if(dist<=.18||spd===0)return;
   if(G.freeNoClip){
    var st0=Math.min(spd*dt,dist-.85);fp.x+=ddx/dist*st0;fp.y+=ddy/dist*st0;
   }else{
@@ -967,9 +993,9 @@ function updateFree(dt){
  if(G.freeMonsterAI){
   var attacker=null,attackDist=Infinity;
   G.chars.forEach(function(c){if(!c.freePos)return;var d=Math.hypot(p.x-c.freePos.x,p.y-c.freePos.y);if(d<attackDist){attackDist=d;attacker=c;}});
-  if(attacker&&attackDist<.58){
+  if(attacker&&attackDist<.64){
    G.freeMode=false;G.freeKeys={};G.manualScare=null;
-   if(typeof lhAddLog==='function')lhAddLog('FREE MODE DEATH',attacker.name+' caught the player during first-person exploration.','threat');
+   if(typeof lhAddLog==='function')lhAddLog('FREE MODE DEATH',attacker.name+' sprinted into the player during first-person exploration; physical contact was fatal.','threat');
    doScare(attacker);return;
   }
  }
@@ -1045,7 +1071,7 @@ function drawRoomProp(type,x,y,sc,accent){
  ctx.restore();
 }
 /* ===== Free mode renderer: textured raycaster, per-pixel lighting, fog, depth-tested lit sprites ===== */
-var RW=(navigator.deviceMemory&&navigator.deviceMemory<=2)?512:640,RH=(RW*9/16)|0,FOV=.82,FOGK=.15,LR2=40;
+var RW=(navigator.deviceMemory&&navigator.deviceMemory<=2)?512:800,RH=(RW*9/16)|0,FOV=.82,FOGK=.145,LR2=40;
 var fb=null,fbx=null,fbImg=null,fbd=null,flashMask=null,sprC=null,sprX=null;
 var zbuf=new Float32Array(RW),wtop=new Int16Array(RW),wbot=new Int16Array(RW);
 var WET_SURFACE=new Float32Array(64*64);
@@ -1209,7 +1235,7 @@ var FLOOR_BY_ROOM=['boards','checker','tile','tileE','parquet','checkerR','carpe
 var AMB=new Float32Array([
  .52,.18,.21, .39,.32,.24, .22,.36,.39, .36,.24,.39, .42,.33,.20, .48,.35,.21,
  .45,.21,.33, .21,.30,.36, .35,.30,.20, .45,.28,.14, .21,.27,.35
-]);
+].map(function(v){return v*.76;}));
 
 /* --- lights: a ceiling fixture per room, plus lamps, stage spots and engine glow --- */
 var FREE_LIGHTS=[];
@@ -3505,8 +3531,8 @@ function renderCinematicScare(monster,t,safe){
     lhScareDrawVignette(t,profile);
     lhScareDrawSerial(t,profile);
   }
-  if(t>1.48){
-    var fade=lhScareClamp((t-1.48)/.22,0,1);
+  if(t>2.02){
+    var fade=lhScareClamp((t-2.02)/.23,0,1);
     ctx.fillStyle='rgba(0,0,0,'+fade+')';ctx.fillRect(0,0,W,H);
   }
   ctx.restore();
@@ -4618,6 +4644,113 @@ function render(){
 }
 
 var last=0;
+
+/* ------------------------------------------------------------------
+   FREE MODE: DARK CINEMATIC GRADE + THREAT RESPONSE
+   Screen-space light shafts, beam-lit dust, lens grit and a heavier
+   vignette augment the existing textured raycaster. A low-memory
+   preset keeps dust counts modest on lightweight Chromebooks.
+   ------------------------------------------------------------------ */
+var LH_FREE_DUST=[];
+for(var lfd=0;lfd<72;lfd++)LH_FREE_DUST.push({
+ x:hsh(lfd,3,401),y:hsh(lfd,5,402),r:.45+hsh(lfd,7,403)*1.55,
+ v:.00010+hsh(lfd,9,404)*.00034,ph:hsh(lfd,11,405)*6.283,
+ a:.045+hsh(lfd,13,406)*.105
+});
+function lhDrawFreeCinematicGrade(p,t){
+ if(!G||!G.freeMode)return;
+ var pref=window.LHTeenPrefs||{},fear=clamp(p&&p.fear||0,0,1),now=t||0;
+ ctx.save();
+ /* Cold black lift: reduce ambient wash without crushing the flashlight hotspot. */
+ ctx.globalCompositeOperation='source-over';
+ ctx.fillStyle='rgba(0,3,8,.135)';ctx.fillRect(0,0,W,H);
+ /* A narrow volumetric-looking flashlight shaft with a soft cone falloff. */
+ if(G.freeFlashlight){
+  ctx.save();ctx.globalCompositeOperation='screen';
+  var pulse=(fear>.42&&!pref.reduceMotion)?(.88+.12*Math.sin(now*31)):1;
+  var core=ctx.createRadialGradient(W*.505,H*.49,1,W*.505,H*.49,Math.min(W,H)*.48);
+  core.addColorStop(0,'rgba(204,218,224,'+(.064*pulse)+')');
+  core.addColorStop(.22,'rgba(159,187,198,'+(.040*pulse)+')');
+  core.addColorStop(.52,'rgba(115,150,166,'+(.016*pulse)+')');
+  core.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=core;ctx.fillRect(0,0,W,H);
+  var shaft=ctx.createLinearGradient(W*.5,H*.58,W*.5,H*.04);
+  shaft.addColorStop(0,'rgba(210,224,220,.038)');shaft.addColorStop(.25,'rgba(195,210,210,.023)');shaft.addColorStop(1,'rgba(170,195,207,0)');
+  ctx.fillStyle=shaft;ctx.beginPath();ctx.moveTo(W*.47,H*.65);ctx.lineTo(W*.34,H*.08);ctx.lineTo(W*.65,H*.08);ctx.lineTo(W*.54,H*.65);ctx.closePath();ctx.fill();
+  /* Dust is easiest to see inside the flashlight cone. */
+  for(var i=0;i<LH_FREE_DUST.length;i++){
+   var d=LH_FREE_DUST[i];
+   d.y-=d.v*(1+fear*.45);d.x+=Math.sin(now*.6+d.ph)*.000025;
+   if(d.y<.035){d.y=.98;d.x=hsh(i,Math.floor(now*3),407);}
+   var cx=Math.abs(d.x-.5),beamAmt=clamp(1-cx*3.4,0,1),a=d.a*beamAmt*(.55+.45*Math.sin(now*1.25+d.ph));
+   if(a<.012)continue;
+   ctx.globalAlpha=a;ctx.fillStyle=i%5===0?'#d9e1df':'#c7c5b9';
+   ctx.beginPath();ctx.ellipse(d.x*W,d.y*H,d.r,d.r*1.7,d.ph,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;ctx.restore();
+ }
+ /* Severe optical falloff at the corners; center remains readable in the beam. */
+ var vign=ctx.createRadialGradient(W*.5,H*.48,Math.min(W,H)*.08,W*.5,H*.5,Math.max(W,H)*.76);
+ vign.addColorStop(0,'rgba(0,1,5,0)');
+ vign.addColorStop(.27,'rgba(0,1,6,.055)');
+ vign.addColorStop(.54,'rgba(0,1,5,.25)');
+ vign.addColorStop(.78,'rgba(0,0,0,.57)');
+ vign.addColorStop(1,'rgba(0,0,0,.82)');
+ ctx.fillStyle=vign;ctx.fillRect(0,0,W,H);
+ /* Threat proximity creates edge bleed and lens tremor, not a full-screen bright flash. */
+ var nearest=99,who=null;
+ if(G.freeMonsterAI)(G.chars||[]).forEach(function(c){if(!c.freePos)return;var dd=Math.hypot(p.x-c.freePos.x,p.y-c.freePos.y);if(dd<nearest){nearest=dd;who=c;}});
+ if(who&&nearest<5){
+  var danger=clamp((5-nearest)/4,0,1),beat=.5+.5*Math.sin(now*(7+fear*5));
+  var red=ctx.createRadialGradient(W*.5,H*.5,Math.min(W,H)*.2,W*.5,H*.5,Math.max(W,H)*.77);
+  red.addColorStop(0,'rgba(55,0,3,0)');red.addColorStop(.58,'rgba(75,0,6,'+(.035*danger)+')');
+  red.addColorStop(1,'rgba(112,0,8,'+((.11+.10*beat)*danger)+')');
+  ctx.fillStyle=red;ctx.fillRect(0,0,W,H);
+  if(nearest<1.9){
+   ctx.globalAlpha=(.035+.035*beat)*danger;ctx.fillStyle='#8b0910';
+   ctx.fillRect(0,0,W,5+danger*9);ctx.fillRect(0,H-5-danger*9,W,5+danger*9);
+  }
+ }
+ /* Sparse fixed film grain and tiny lens scuffs; deterministic to avoid distracting sparkle. */
+ ctx.globalAlpha=.035;ctx.fillStyle='#ddd5c8';
+ var tick=Math.floor(now*12);
+ for(var gn=0;gn<68;gn++){var gx=hsh(gn,tick,411)*W,gy=hsh(gn,tick,412)*H;ctx.fillRect(gx,gy,.7+hsh(gn,2,413)*1.2,.6);}
+ ctx.globalAlpha=.045;ctx.strokeStyle='rgba(201,202,194,.22)';ctx.lineWidth=1;
+ for(var sc=0;sc<3;sc++){var sx=W*(.08+sc*.39),sy=H*(.17+(sc%2)*.31);ctx.beginPath();ctx.moveTo(sx,sy);ctx.quadraticCurveTo(sx+3,sy+12,sx-1,sy+28);ctx.stroke();}
+ ctx.restore();
+}
+var LH_DRAW_FREE_BASE=drawFree3D;
+drawFree3D=function(view){
+ LH_DRAW_FREE_BASE.apply(this,arguments);
+ if(!view&&G&&G.freeMode)lhDrawFreeCinematicGrade(G.player||{},G.freeT||0);
+};
+
+/* Lethal jumpscare impact layer: brief edge-claw streaks, a shock pulse and lens tear. */
+var LH_RENDER_SCARE_BASE=renderCinematicScare;
+renderCinematicScare=function(monster,t,safe){
+ LH_RENDER_SCARE_BASE.apply(this,arguments);
+ if(safe)return;
+ var pref=window.LHTeenPrefs||{},reduce=!!pref.reduceFlashes;
+ var impact=clamp((t-.075)/.12,0,1)*(1-clamp((t-.43)/.20,0,1));
+ var lunge=clamp((t-.20)/.13,0,1)*(1-clamp((t-.78)/.22,0,1));
+ var fade=t>2.02?1-clamp((t-2.02)/.23,0,1):1;
+ ctx.save();
+ if(!reduce&&impact>0){ctx.fillStyle='rgba(190,8,13,'+(.18*impact*fade)+')';ctx.fillRect(0,0,W,H);}
+ /* Sharp radial splinters rush inward toward the viewer during the lunge. */
+ if(lunge>0){
+  ctx.globalAlpha=(.12+.14*lunge)*fade;ctx.strokeStyle='#a91b21';ctx.lineWidth=1.5;
+  for(var k=0;k<18;k++){
+   var a=(k/18)*Math.PI*2,inner=.18+.46*(1-lunge),outer=.43+.42*lunge;
+   ctx.beginPath();ctx.moveTo(W*(.5+Math.cos(a)*inner),H*(.5+Math.sin(a)*inner));
+   ctx.lineTo(W*(.5+Math.cos(a+.018)*outer),H*(.5+Math.sin(a+.018)*outer));ctx.stroke();
+  }
+ }
+ if(t>.72&&t<1.55){
+  var after=.055*(.5+.5*Math.sin(t*46));ctx.fillStyle='rgba(110,0,8,'+(after*fade)+')';
+  ctx.fillRect(0,0,W,3);ctx.fillRect(0,H-3,W,3);
+ }
+ ctx.restore();
+};
+
 function loop(ts){
   var dt=Math.min(.05,((ts-last)/1000)||0);last=ts;
   var logPanel=document.getElementById('nightLogPanel'),nightLogOpen=!!(logPanel&&!logPanel.hidden);
